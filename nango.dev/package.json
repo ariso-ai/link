@@ -8,7 +8,7 @@
     "dev": "nango dev"
   },
   "devDependencies": {
-    "nango": "0.69.43",
+    "nango": "^0.69.43",
     "zod": "4.0.5"
   }
 }
