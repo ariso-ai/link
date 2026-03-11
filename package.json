@@ -1,0 +1,10 @@
+{
+  "name": "@ariso-ai/link",
+  "private": true,
+  "engines": {
+    "node": ">=24.0"
+  },
+  "workspaces": [
+    "nango.dev"
+  ]
+}

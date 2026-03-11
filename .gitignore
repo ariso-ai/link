@@ -1,0 +1,8 @@
+node_modules/
+build/
+.env
+
+# Nango generated files
+nango.dev/.nango/nango.json
+nango.dev/.nango/schema.json
+nango.dev/.nango/schema.ts
