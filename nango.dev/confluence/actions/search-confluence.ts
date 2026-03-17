@@ -59,7 +59,7 @@ const action = createAction({
 
         const response = await nango.proxy<ConfluenceSearchResponse>({
             baseUrlOverride: 'https://api.atlassian.com',
-            endpoint: `/ex/confluence/${cloudId}/rest/api/content/search`,
+            endpoint: `/ex/confluence/${cloudId}/rest/api/search`,
             params: {
                 cql: input.query,
                 limit: String(limit),
