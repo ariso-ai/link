@@ -6,6 +6,7 @@ import type { NangoAction } from 'nango';
  */
 export async function getCloudId(nango: NangoAction): Promise<string> {
     const response = await nango.proxy<Array<{ id: string; url: string }>>({
+        method: 'GET',
         baseUrlOverride: 'https://api.atlassian.com',
         endpoint: '/oauth/token/accessible-resources',
         retries: 3,
