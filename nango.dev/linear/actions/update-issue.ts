@@ -1,6 +1,11 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
-import { issueFieldsFragment, type LinearIssueRaw } from '../helpers/issue-fields.js';
+import {
+    issueFieldsFragment,
+    linearIssueSchema,
+    mapLinearIssue,
+    type LinearIssueRaw,
+} from '../helpers/issue-fields.js';
 
 // --- Input schema ---
 const updateIssueInputSchema = z.object({
@@ -11,7 +16,11 @@ const updateIssueInputSchema = z.object({
         .string()
         .optional()
         .describe('New workflow state UUID. Use "list-workflow-states" to discover IDs per team.'),
-    assigneeId: z.string().optional().describe('New assignee user UUID, or null to unassign'),
+    assigneeId: z
+        .string()
+        .nullable()
+        .optional()
+        .describe('New assignee user UUID, or null to unassign'),
     priority: z
         .number()
         .min(0)
@@ -22,18 +31,7 @@ const updateIssueInputSchema = z.object({
 });
 
 // --- Output schema ---
-const updateIssueOutputSchema = z.object({
-    id: z.string(),
-    identifier: z.string(),
-    title: z.string(),
-    description: z.string().nullable(),
-    url: z.string(),
-    priority: z.number(),
-    priorityLabel: z.string(),
-    state: z.object({ id: z.string(), name: z.string(), type: z.string() }),
-    assignee: z.object({ id: z.string(), name: z.string(), email: z.string() }).nullable(),
-    updatedAt: z.string(),
-});
+const updateIssueOutputSchema = linearIssueSchema;
 
 // --- Linear GraphQL response types ---
 interface LinearUpdateIssueResponse {
@@ -60,6 +58,7 @@ const action = createAction({
         if (input.title !== undefined) updateInput['title'] = input.title;
         if (input.description !== undefined) updateInput['description'] = input.description;
         if (input.stateId !== undefined) updateInput['stateId'] = input.stateId;
+        // null is forwarded as-is to clear the assignee.
         if (input.assigneeId !== undefined) updateInput['assigneeId'] = input.assigneeId;
         if (input.priority !== undefined) updateInput['priority'] = input.priority;
         if (input.labelIds !== undefined) updateInput['labelIds'] = input.labelIds;
@@ -100,18 +99,7 @@ const action = createAction({
             throw new Error('Linear reported issueUpdate as unsuccessful');
         }
 
-        return {
-            id: issue.id,
-            identifier: issue.identifier,
-            title: issue.title,
-            description: issue.description,
-            url: issue.url,
-            priority: issue.priority,
-            priorityLabel: issue.priorityLabel,
-            state: issue.state,
-            assignee: issue.assignee,
-            updatedAt: issue.updatedAt,
-        };
+        return mapLinearIssue(issue);
     },
 });
 

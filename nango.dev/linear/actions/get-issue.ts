@@ -1,6 +1,11 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
-import { issueFieldsFragment, type LinearIssueRaw } from '../helpers/issue-fields.js';
+import {
+    issueFieldsFragment,
+    linearIssueSchema,
+    mapLinearIssue,
+    type LinearIssueRaw,
+} from '../helpers/issue-fields.js';
 
 // --- Input schema ---
 const getIssueInputSchema = z.object({
@@ -10,22 +15,7 @@ const getIssueInputSchema = z.object({
 });
 
 // --- Output schema ---
-const getIssueOutputSchema = z.object({
-    id: z.string(),
-    identifier: z.string(),
-    title: z.string(),
-    description: z.string().nullable(),
-    url: z.string(),
-    priority: z.number(),
-    priorityLabel: z.string(),
-    state: z.object({ id: z.string(), name: z.string(), type: z.string() }),
-    team: z.object({ id: z.string(), key: z.string(), name: z.string() }),
-    assignee: z.object({ id: z.string(), name: z.string(), email: z.string() }).nullable(),
-    creator: z.object({ id: z.string(), name: z.string(), email: z.string() }).nullable(),
-    labels: z.array(z.object({ id: z.string(), name: z.string() })),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-});
+const getIssueOutputSchema = linearIssueSchema;
 
 // --- Linear GraphQL response types ---
 interface LinearGetByIdResponse {
@@ -114,22 +104,7 @@ const action = createAction({
             throw new Error(`Linear issue "${input.issueId}" not found`);
         }
 
-        return {
-            id: issue.id,
-            identifier: issue.identifier,
-            title: issue.title,
-            description: issue.description,
-            url: issue.url,
-            priority: issue.priority,
-            priorityLabel: issue.priorityLabel,
-            state: issue.state,
-            team: issue.team,
-            assignee: issue.assignee,
-            creator: issue.creator,
-            labels: issue.labels.nodes,
-            createdAt: issue.createdAt,
-            updatedAt: issue.updatedAt,
-        };
+        return mapLinearIssue(issue);
     },
 });
 

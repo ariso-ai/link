@@ -1,6 +1,11 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
-import { issueFieldsFragment, type LinearIssueRaw } from '../helpers/issue-fields.js';
+import {
+    issueFieldsFragment,
+    linearIssueSchema,
+    mapLinearIssue,
+    type LinearIssueRaw,
+} from '../helpers/issue-fields.js';
 
 // --- Input schema ---
 const listIssuesInputSchema = z.object({
@@ -17,29 +22,11 @@ const listIssuesInputSchema = z.object({
 });
 
 // --- Output schemas ---
-const linearIssueSchema = z.object({
-    id: z.string(),
-    identifier: z.string(),
-    title: z.string(),
-    description: z.string().nullable(),
-    url: z.string(),
-    priority: z.number(),
-    priorityLabel: z.string(),
-    state: z.object({ name: z.string(), type: z.string() }),
-    team: z.object({ key: z.string(), name: z.string() }),
-    assignee: z.object({ name: z.string(), email: z.string() }).nullable(),
-    labels: z.array(z.string()),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-});
-
 const listIssuesOutputSchema = z.object({
     issues: z.array(linearIssueSchema),
     hasNextPage: z.boolean(),
     endCursor: z.string().nullable(),
 });
-
-type LinearIssue = z.infer<typeof linearIssueSchema>;
 
 // --- Linear GraphQL response types ---
 interface LinearIssuesResponse {
@@ -112,24 +99,8 @@ const action = createAction({
 
         const { nodes, pageInfo } = response.data.data.issues;
 
-        const issues: LinearIssue[] = nodes.map((n) => ({
-            id: n.id,
-            identifier: n.identifier,
-            title: n.title,
-            description: n.description,
-            url: n.url,
-            priority: n.priority,
-            priorityLabel: n.priorityLabel,
-            state: { name: n.state.name, type: n.state.type },
-            team: { key: n.team.key, name: n.team.name },
-            assignee: n.assignee ? { name: n.assignee.name, email: n.assignee.email } : null,
-            labels: n.labels.nodes.map((l) => l.name),
-            createdAt: n.createdAt,
-            updatedAt: n.updatedAt,
-        }));
-
         return {
-            issues,
+            issues: nodes.map(mapLinearIssue),
             hasNextPage: pageInfo.hasNextPage,
             endCursor: pageInfo.endCursor,
         };
