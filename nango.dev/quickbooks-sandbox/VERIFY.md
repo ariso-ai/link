@@ -4,13 +4,11 @@ Use this runbook to verify the QuickBooks Online actions from compile through Na
 
 ## Prerequisites
 
-- A Nango dev environment with a `quickbooks-sandbox` integration configured, or a production-like environment with `quickbooks`.
+- A Nango dev environment with a `quickbooks-sandbox` integration configured.
 - A QuickBooks Online sandbox/company connected through Nango.
 - The connection has the `com.intuit.quickbooks.accounting` scope.
 - A Nango environment secret key available locally as `NANGO_SECRET_KEY`.
-- The QuickBooks connection ID and provider config key:
-  - Sandbox provider config key: `quickbooks-sandbox`
-  - Production provider config key: `quickbooks`
+- The QuickBooks connection ID and provider config key: `quickbooks-sandbox`
 
 If an action fails with `QuickBooks realmId missing`, reauthenticate the QuickBooks connection in Nango. QuickBooks requires the company ID, also called `realmId`, for every company API request.
 
@@ -48,9 +46,7 @@ If the CLI prompts for destructive changes, stop and inspect the diff before con
 
 1. Open [Nango](https://app.nango.dev).
 2. Select the correct environment, usually `dev`.
-3. Open the QuickBooks integration:
-   - `quickbooks-sandbox` for sandbox testing
-   - `quickbooks` for production-like testing
+3. Open the QuickBooks integration: `quickbooks-sandbox`.
 4. Confirm the QuickBooks OAuth app credentials are configured.
 5. Confirm at least one QuickBooks connection exists and is healthy.
 6. Open the integration's Functions/Actions area.
@@ -282,4 +278,3 @@ Expected tool behavior:
 | Report validation error | Date range is invalid or longer than 186 days | Use a valid range within six months |
 | QuickBooks query parse error | Filter value contains unexpected characters or unsupported field filter | Retry with fewer filters, then inspect Nango logs |
 | Action output exceeds size limit | Report or query response is too large | Narrow date range, lower `maxResults`, or use a more specific report |
-
