@@ -4,6 +4,8 @@ Custom [Nango](https://nango.dev) actions for QuickBooks Online accounting reads
 
 These actions intentionally start with read/report operations. Existing Nango QuickBooks templates can still be reused for write workflows such as creating customers, invoices, payments, and journal entries when those become necessary.
 
+See [VERIFY.md](./VERIFY.md) for the Nango app verification runbook, dashboard testing steps, and QuickBooks-specific agent prompts.
+
 ## Actions
 
 | Action | Method | Endpoint | Description | Scopes |
@@ -21,4 +23,3 @@ These actions intentionally start with read/report operations. Existing Nango Qu
 - "Receipts" are exposed as both `Payment` and `SalesReceipt` because customers often use the term for both invoice payments and immediate paid sales.
 - Journal entries are read-only in this first pass. The response includes `debitTotal`, `creditTotal`, and `isBalanced` so an agent can interpret the entry without creating or modifying accounting data.
 - `run-report` allowlists common accounting reports and caps explicit date ranges at 186 days to avoid oversized report responses.
-
