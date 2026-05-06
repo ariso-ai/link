@@ -21,10 +21,10 @@ const inputSchema = z.object({
 
 const paymentSchema = z.object({
     id: z.string(),
-    txnDate: z.string().nullable(),
+    txnDate: z.string(),
     customer: refSchema,
-    totalAmount: z.number().nullable(),
-    unappliedAmount: z.number().nullable(),
+    totalAmount: z.number(),
+    unappliedAmount: z.number(),
     depositToAccount: refSchema,
     paymentMethod: refSchema,
     metadata: metadataSchema,
@@ -34,7 +34,7 @@ const outputSchema = z.object({
     payments: z.array(paymentSchema),
     startPosition: z.number(),
     maxResults: z.number(),
-    totalCount: z.number().nullable(),
+    totalCount: z.number(),
 });
 
 interface QuickBooksPayment {
@@ -77,10 +77,10 @@ const action = createAction({
         return {
             payments: result.records.map((payment) => ({
                 id: payment.Id,
-                txnDate: payment.TxnDate ?? null,
+                txnDate: payment.TxnDate ?? '',
                 customer: refToObject(payment.CustomerRef),
-                totalAmount: payment.TotalAmt ?? null,
-                unappliedAmount: payment.UnappliedAmt ?? null,
+                totalAmount: payment.TotalAmt ?? 0,
+                unappliedAmount: payment.UnappliedAmt ?? 0,
                 depositToAccount: refToObject(payment.DepositToAccountRef),
                 paymentMethod: refToObject(payment.PaymentMethodRef),
                 metadata: metadataToObject(payment.MetaData),
@@ -93,4 +93,3 @@ const action = createAction({
 });
 
 export default action;
-

@@ -6,14 +6,13 @@ export const paginationInputSchema = {
 };
 
 export const refSchema = z.object({
-    id: z.string().nullable(),
-    name: z.string().nullable(),
+    id: z.string(),
+    name: z.string(),
 });
 
 export const metadataSchema = z.object({
-    createTime: z.string().nullable(),
-    lastUpdatedTime: z.string().nullable(),
+    createTime: z.string(),
+    lastUpdatedTime: z.string(),
 });
 
-export const moneySchema = z.number().nullable();
-
+export const moneySchema = z.number();

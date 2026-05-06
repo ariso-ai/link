@@ -33,19 +33,19 @@ export async function getCompanyId(nango: NangoAction): Promise<string> {
     throw new Error('QuickBooks realmId missing from Nango connection config. Reauthenticate the QuickBooks connection.');
 }
 
-export function refToObject(ref: QuickBooksRef | undefined | null): { id: string | null; name: string | null } {
+export function refToObject(ref: QuickBooksRef | undefined | null): { id: string; name: string } {
     return {
-        id: ref?.value ?? null,
-        name: ref?.name ?? null,
+        id: ref?.value ?? '',
+        name: ref?.name ?? '',
     };
 }
 
 export function metadataToObject(
     metadata: QuickBooksMetadata | undefined | null
-): { createTime: string | null; lastUpdatedTime: string | null } {
+): { createTime: string; lastUpdatedTime: string } {
     return {
-        createTime: metadata?.CreateTime ?? null,
-        lastUpdatedTime: metadata?.LastUpdatedTime ?? null,
+        createTime: metadata?.CreateTime ?? '',
+        lastUpdatedTime: metadata?.LastUpdatedTime ?? '',
     };
 }
 
@@ -63,7 +63,7 @@ export async function queryQuickBooks<T>(
     companyId: string,
     entity: string,
     query: string
-): Promise<{ records: T[]; startPosition: number; maxResults: number; totalCount: number | null }> {
+): Promise<{ records: T[]; startPosition: number; maxResults: number; totalCount: number }> {
     const response = await nango.get<QuickBooksQueryResponse<T>>({
         endpoint: `/v3/company/${companyId}/query`,
         params: { query },
@@ -77,7 +77,6 @@ export async function queryQuickBooks<T>(
         records,
         startPosition: typeof queryResponse.startPosition === 'number' ? queryResponse.startPosition : 1,
         maxResults: typeof queryResponse.maxResults === 'number' ? queryResponse.maxResults : records.length,
-        totalCount: typeof queryResponse.totalCount === 'number' ? queryResponse.totalCount : null,
+        totalCount: typeof queryResponse.totalCount === 'number' ? queryResponse.totalCount : records.length,
     };
 }
-

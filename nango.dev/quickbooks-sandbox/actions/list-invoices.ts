@@ -22,14 +22,14 @@ const inputSchema = z.object({
 
 const invoiceSchema = z.object({
     id: z.string(),
-    docNumber: z.string().nullable(),
-    txnDate: z.string().nullable(),
-    dueDate: z.string().nullable(),
+    docNumber: z.string(),
+    txnDate: z.string(),
+    dueDate: z.string(),
     customer: refSchema,
-    totalAmount: z.number().nullable(),
-    balance: z.number().nullable(),
+    totalAmount: z.number(),
+    balance: z.number(),
     currency: refSchema,
-    emailStatus: z.string().nullable(),
+    emailStatus: z.string(),
     metadata: metadataSchema,
 });
 
@@ -37,7 +37,7 @@ const outputSchema = z.object({
     invoices: z.array(invoiceSchema),
     startPosition: z.number(),
     maxResults: z.number(),
-    totalCount: z.number().nullable(),
+    totalCount: z.number(),
 });
 
 interface QuickBooksInvoice {
@@ -84,14 +84,14 @@ const action = createAction({
         return {
             invoices: result.records.map((invoice) => ({
                 id: invoice.Id,
-                docNumber: invoice.DocNumber ?? null,
-                txnDate: invoice.TxnDate ?? null,
-                dueDate: invoice.DueDate ?? null,
+                docNumber: invoice.DocNumber ?? '',
+                txnDate: invoice.TxnDate ?? '',
+                dueDate: invoice.DueDate ?? '',
                 customer: refToObject(invoice.CustomerRef),
-                totalAmount: invoice.TotalAmt ?? null,
-                balance: invoice.Balance ?? null,
+                totalAmount: invoice.TotalAmt ?? 0,
+                balance: invoice.Balance ?? 0,
                 currency: refToObject(invoice.CurrencyRef),
-                emailStatus: invoice.EmailStatus ?? null,
+                emailStatus: invoice.EmailStatus ?? '',
                 metadata: metadataToObject(invoice.MetaData),
             })),
             startPosition: result.startPosition,
@@ -102,4 +102,3 @@ const action = createAction({
 });
 
 export default action;
-

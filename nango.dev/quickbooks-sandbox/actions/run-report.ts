@@ -36,10 +36,10 @@ const inputSchema = z
     );
 
 const outputSchema = z.object({
-    reportName: z.string().nullable(),
-    startPeriod: z.string().nullable(),
-    endPeriod: z.string().nullable(),
-    currency: z.string().nullable(),
+    reportName: z.string(),
+    startPeriod: z.string(),
+    endPeriod: z.string(),
+    currency: z.string(),
     columns: z.array(z.unknown()),
     rows: z.array(z.unknown()),
     raw: z.unknown(),
@@ -85,10 +85,10 @@ const action = createAction({
         });
 
         return {
-            reportName: response.data.Header?.ReportName ?? null,
-            startPeriod: response.data.Header?.StartPeriod ?? null,
-            endPeriod: response.data.Header?.EndPeriod ?? null,
-            currency: response.data.Header?.Currency ?? null,
+            reportName: response.data.Header?.ReportName ?? '',
+            startPeriod: response.data.Header?.StartPeriod ?? '',
+            endPeriod: response.data.Header?.EndPeriod ?? '',
+            currency: response.data.Header?.Currency ?? '',
             columns: response.data.Columns?.Column ?? [],
             rows: response.data.Rows?.Row ?? [],
             raw: response.data,
@@ -97,4 +97,3 @@ const action = createAction({
 });
 
 export default action;
-

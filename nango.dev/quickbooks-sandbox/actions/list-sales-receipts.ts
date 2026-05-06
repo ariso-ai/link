@@ -21,11 +21,11 @@ const inputSchema = z.object({
 
 const salesReceiptSchema = z.object({
     id: z.string(),
-    docNumber: z.string().nullable(),
-    txnDate: z.string().nullable(),
+    docNumber: z.string(),
+    txnDate: z.string(),
     customer: refSchema,
-    totalAmount: z.number().nullable(),
-    balance: z.number().nullable(),
+    totalAmount: z.number(),
+    balance: z.number(),
     depositToAccount: refSchema,
     paymentMethod: refSchema,
     metadata: metadataSchema,
@@ -35,7 +35,7 @@ const outputSchema = z.object({
     salesReceipts: z.array(salesReceiptSchema),
     startPosition: z.number(),
     maxResults: z.number(),
-    totalCount: z.number().nullable(),
+    totalCount: z.number(),
 });
 
 interface QuickBooksSalesReceipt {
@@ -79,11 +79,11 @@ const action = createAction({
         return {
             salesReceipts: result.records.map((receipt) => ({
                 id: receipt.Id,
-                docNumber: receipt.DocNumber ?? null,
-                txnDate: receipt.TxnDate ?? null,
+                docNumber: receipt.DocNumber ?? '',
+                txnDate: receipt.TxnDate ?? '',
                 customer: refToObject(receipt.CustomerRef),
-                totalAmount: receipt.TotalAmt ?? null,
-                balance: receipt.Balance ?? null,
+                totalAmount: receipt.TotalAmt ?? 0,
+                balance: receipt.Balance ?? 0,
                 depositToAccount: refToObject(receipt.DepositToAccountRef),
                 paymentMethod: refToObject(receipt.PaymentMethodRef),
                 metadata: metadataToObject(receipt.MetaData),
@@ -96,4 +96,3 @@ const action = createAction({
 });
 
 export default action;
-

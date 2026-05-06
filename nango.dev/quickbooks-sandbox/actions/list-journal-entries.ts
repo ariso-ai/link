@@ -19,20 +19,20 @@ const inputSchema = z.object({
 });
 
 const journalLineSchema = z.object({
-    id: z.string().nullable(),
-    description: z.string().nullable(),
-    amount: z.number().nullable(),
-    postingType: z.string().nullable(),
+    id: z.string(),
+    description: z.string(),
+    amount: z.number(),
+    postingType: z.string(),
     account: refSchema,
     entity: refSchema,
 });
 
 const journalEntrySchema = z.object({
     id: z.string(),
-    txnDate: z.string().nullable(),
-    privateNote: z.string().nullable(),
+    txnDate: z.string(),
+    privateNote: z.string(),
     currency: refSchema,
-    exchangeRate: z.number().nullable(),
+    exchangeRate: z.number(),
     debitTotal: z.number(),
     creditTotal: z.number(),
     isBalanced: z.boolean(),
@@ -44,7 +44,7 @@ const outputSchema = z.object({
     journalEntries: z.array(journalEntrySchema),
     startPosition: z.number(),
     maxResults: z.number(),
-    totalCount: z.number().nullable(),
+    totalCount: z.number(),
 });
 
 interface QuickBooksJournalLine {
@@ -105,10 +105,10 @@ const action = createAction({
                 const lines = (entry.Line ?? []).map((line) => {
                     const detail = line.JournalEntryLineDetail;
                     return {
-                        id: line.Id ?? null,
-                        description: line.Description ?? null,
-                        amount: line.Amount ?? null,
-                        postingType: detail?.PostingType ?? null,
+                        id: line.Id ?? '',
+                        description: line.Description ?? '',
+                        amount: line.Amount ?? 0,
+                        postingType: detail?.PostingType ?? '',
                         account: refToObject(detail?.AccountRef),
                         entity: refToObject(detail?.Entity?.EntityRef),
                     };
@@ -126,10 +126,10 @@ const action = createAction({
 
                 return {
                     id: entry.Id,
-                    txnDate: entry.TxnDate ?? null,
-                    privateNote: entry.PrivateNote ?? null,
+                    txnDate: entry.TxnDate ?? '',
+                    privateNote: entry.PrivateNote ?? '',
                     currency: refToObject(entry.CurrencyRef),
-                    exchangeRate: entry.ExchangeRate ?? null,
+                    exchangeRate: entry.ExchangeRate ?? 0,
                     debitTotal,
                     creditTotal,
                     isBalanced: debitTotal === creditTotal,
@@ -145,4 +145,3 @@ const action = createAction({
 });
 
 export default action;
-

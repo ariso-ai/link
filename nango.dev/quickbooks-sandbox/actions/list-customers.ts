@@ -20,13 +20,13 @@ const inputSchema = z.object({
 const customerSchema = z.object({
     id: z.string(),
     displayName: z.string(),
-    active: z.boolean().nullable(),
-    companyName: z.string().nullable(),
-    givenName: z.string().nullable(),
-    familyName: z.string().nullable(),
-    primaryEmail: z.string().nullable(),
-    primaryPhone: z.string().nullable(),
-    balance: z.number().nullable(),
+    active: z.boolean(),
+    companyName: z.string(),
+    givenName: z.string(),
+    familyName: z.string(),
+    primaryEmail: z.string(),
+    primaryPhone: z.string(),
+    balance: z.number(),
     currency: refSchema,
     metadata: metadataSchema,
 });
@@ -35,7 +35,7 @@ const outputSchema = z.object({
     customers: z.array(customerSchema),
     startPosition: z.number(),
     maxResults: z.number(),
-    totalCount: z.number().nullable(),
+    totalCount: z.number(),
 });
 
 interface QuickBooksCustomer {
@@ -87,16 +87,16 @@ const action = createAction({
             customers: result.records.map((customer) => ({
                 id: customer.Id,
                 displayName: customer.DisplayName ?? '',
-                active: customer.Active ?? null,
-                companyName: customer.CompanyName ?? null,
-                givenName: customer.GivenName ?? null,
-                familyName: customer.FamilyName ?? null,
-                primaryEmail: customer.PrimaryEmailAddr?.Address ?? null,
-                primaryPhone: customer.PrimaryPhone?.FreeFormNumber ?? null,
-                balance: customer.Balance ?? null,
+                active: customer.Active ?? false,
+                companyName: customer.CompanyName ?? '',
+                givenName: customer.GivenName ?? '',
+                familyName: customer.FamilyName ?? '',
+                primaryEmail: customer.PrimaryEmailAddr?.Address ?? '',
+                primaryPhone: customer.PrimaryPhone?.FreeFormNumber ?? '',
+                balance: customer.Balance ?? 0,
                 currency: {
-                    id: customer.CurrencyRef?.value ?? null,
-                    name: customer.CurrencyRef?.name ?? null,
+                    id: customer.CurrencyRef?.value ?? '',
+                    name: customer.CurrencyRef?.name ?? '',
                 },
                 metadata: metadataToObject(customer.MetaData),
             })),
@@ -108,4 +108,3 @@ const action = createAction({
 });
 
 export default action;
-
