@@ -17,7 +17,3 @@ import './linear/actions/add-comment.js';
 // QuickBooks integrations
 import './quickbooks/actions/run-report.js';
 import './quickbooks/actions/list-sales-receipts.js';
-
-// QuickBooks sandbox aliases
-import './quickbooks-sandbox/actions/run-report.js';
-import './quickbooks-sandbox/actions/list-sales-receipts.js';
