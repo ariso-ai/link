@@ -3,7 +3,7 @@ import {
     execListJournalEntries,
     listJournalEntriesInputSchema,
     listJournalEntriesOutputSchema,
-} from './list-journal-entries-shared.js';
+} from '../../quickbooks/actions/list-journal-entries-shared.js';
 
 const action = createAction({
     description: 'List QuickBooks journal entries and return debit/credit totals for read-only agent interpretation',

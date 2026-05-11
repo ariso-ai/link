@@ -27,6 +27,28 @@ export NANGO_CONNECTION_ID="<quickbooks-connection-id>"
 CI=true npm run compile -- --no-interactive --no-dependency-update
 ```
 
+## Deploy
+
+Deploy the same action code to both provider config keys. `quickbooks-sandbox` is a thin Nango entrypoint that reuses the `quickbooks` action implementation, so this does not duplicate business logic.
+
+```bash
+CI=true npx nango deploy "${NANGO_ENV}" \
+  --integration quickbooks \
+  --action list-journal-entries \
+  --auto-confirm \
+  --no-interactive \
+  --no-dependency-update
+```
+
+```bash
+CI=true npx nango deploy "${NANGO_ENV}" \
+  --integration quickbooks-sandbox \
+  --action list-journal-entries \
+  --auto-confirm \
+  --no-interactive \
+  --no-dependency-update
+```
+
 ## Dry Run
 
 ```bash
@@ -63,3 +85,21 @@ curl --request POST \
 ## Chrome Check
 
 Open the connected QuickBooks sandbox, use the global search or accounting reports to find one returned journal entry, and confirm the debit and credit lines balance.
+
+## Ari Dev App Smoke Test
+
+2026-05-11 result against the dev app chat after deploying `list-journal-entries` to both `quickbooks` and `quickbooks-sandbox`:
+
+[Ari chat](https://dev-eager-lederberg-f353eb.cheetah-oratrice.ts.net/chat?conversationId=df4f3fad-98f9-4d0d-b3a8-57db128e1e34)
+
+![Ari list-journal-entries success](./06-list-journal-entries-ari-success.png)
+
+The Ari chat returned `Succeeded` and listed five journal entries from the live QuickBooks Sandbox tool call with `debitTotal`, `creditTotal`, `isBalanced`, and line count.
+
+Direct Nango verification after deploy:
+
+```text
+connection 29477c67-32f6-45cf-bfad-513258b9c4c0: HTTP 200, first journal entry id 148, txnDate 2026-05-11, debitTotal 1, creditTotal 1, isBalanced true, lineCount 2
+```
+
+Interpretation: the `quickbooks-sandbox` action is deployed and returns balanced journal-entry summaries for the live dev-app connection.
