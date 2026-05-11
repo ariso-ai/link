@@ -3,7 +3,7 @@ import {
     execListInvoices,
     listInvoicesInputSchema,
     listInvoicesOutputSchema,
-} from './list-invoices-shared.js';
+} from '../../quickbooks/actions/list-invoices-shared.js';
 
 const action = createAction({
     description: 'List QuickBooks invoices with optional customer, status, date, and updated-since filters',

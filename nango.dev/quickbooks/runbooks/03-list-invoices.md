@@ -27,6 +27,28 @@ export NANGO_CONNECTION_ID="<quickbooks-connection-id>"
 CI=true npm run compile -- --no-interactive --no-dependency-update
 ```
 
+## Deploy
+
+Deploy the same action code to both provider config keys. `quickbooks-sandbox` is a thin Nango entrypoint that reuses the `quickbooks` action implementation, so this does not duplicate business logic.
+
+```bash
+CI=true npx nango deploy "${NANGO_ENV}" \
+  --integration quickbooks \
+  --action list-invoices \
+  --auto-confirm \
+  --no-interactive \
+  --no-dependency-update
+```
+
+```bash
+CI=true npx nango deploy "${NANGO_ENV}" \
+  --integration quickbooks-sandbox \
+  --action list-invoices \
+  --auto-confirm \
+  --no-interactive \
+  --no-dependency-update
+```
+
 ## Dry Run
 
 ```bash
@@ -63,3 +85,21 @@ curl --request POST \
 ## Chrome Check
 
 Open the connected QuickBooks sandbox, go to `Sales > Invoices`, and confirm one returned invoice customer or document number is visible.
+
+## Ari Dev App Smoke Test
+
+2026-05-11 result against the dev app chat after deploying `list-invoices` to both `quickbooks` and `quickbooks-sandbox`:
+
+[Ari chat](https://dev-eager-lederberg-f353eb.cheetah-oratrice.ts.net/chat?conversationId=50d4672a-fd05-45fb-93a4-2ca6d5e1de35)
+
+![Ari list-invoices success](./03-list-invoices-ari-success.png)
+
+The Ari chat returned `Succeeded` and listed the first five invoices from the live QuickBooks Sandbox tool call.
+
+Direct Nango verification after deploy:
+
+```text
+connection 29477c67-32f6-45cf-bfad-513258b9c4c0: HTTP 200, first invoice id 130, docNumber 1037, customer Sonnenschein Family Store, totalAmount 362.07, balance 362.07
+```
+
+Interpretation: the `quickbooks-sandbox` action is deployed and works for the live dev-app connection.
