@@ -1,0 +1,101 @@
+{
+  "journalEntries": [
+    {
+      "id": "8",
+      "txnDate": "2026-04-07",
+      "privateNote": "Opening Balance",
+      "currency": {
+        "id": "USD",
+        "name": "United States Dollar"
+      },
+      "exchangeRate": 1,
+      "debitTotal": 25000,
+      "creditTotal": 25000,
+      "isBalanced": true,
+      "lines": [
+        {
+          "id": "0",
+          "description": "Opening Balance",
+          "amount": 25000,
+          "postingType": "Credit",
+          "account": {
+            "id": "44",
+            "name": "Notes Payable"
+          },
+          "entity": {
+            "id": "",
+            "name": ""
+          }
+        },
+        {
+          "id": "1",
+          "description": "Opening Balance",
+          "amount": 25000,
+          "postingType": "Debit",
+          "account": {
+            "id": "34",
+            "name": "Opening Balance Equity"
+          },
+          "entity": {
+            "id": "",
+            "name": ""
+          }
+        }
+      ],
+      "metadata": {
+        "createTime": "2026-04-07T10:04:24-07:00",
+        "lastUpdatedTime": "2026-04-07T10:04:24-07:00"
+      }
+    },
+    {
+      "id": "7",
+      "txnDate": "2026-04-07",
+      "privateNote": "Opening Balance",
+      "currency": {
+        "id": "USD",
+        "name": "United States Dollar"
+      },
+      "exchangeRate": 1,
+      "debitTotal": 4000,
+      "creditTotal": 4000,
+      "isBalanced": true,
+      "lines": [
+        {
+          "id": "0",
+          "description": "Opening Balance",
+          "amount": 4000,
+          "postingType": "Credit",
+          "account": {
+            "id": "43",
+            "name": "Loan Payable"
+          },
+          "entity": {
+            "id": "",
+            "name": ""
+          }
+        },
+        {
+          "id": "1",
+          "description": "Opening Balance",
+          "amount": 4000,
+          "postingType": "Debit",
+          "account": {
+            "id": "34",
+            "name": "Opening Balance Equity"
+          },
+          "entity": {
+            "id": "",
+            "name": ""
+          }
+        }
+      ],
+      "metadata": {
+        "createTime": "2026-04-07T10:03:25-07:00",
+        "lastUpdatedTime": "2026-04-07T10:03:25-07:00"
+      }
+    }
+  ],
+  "startPosition": 1,
+  "maxResults": 2,
+  "totalCount": 2
+}
