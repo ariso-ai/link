@@ -28,7 +28,7 @@ const inputSchema = z
     .object({
         txnDate: isoDateSchema.describe('Journal entry transaction date in YYYY-MM-DD format.'),
         privateNote: z.string().optional().describe('Optional internal note for the journal entry.'),
-        docNumber: z.string().optional().describe('Optional QuickBooks document number.'),
+        docNumber: z.string().max(21).optional().describe('Optional QuickBooks document number.'),
         currencyId: z.string().optional().describe('Optional QuickBooks currency Id, such as USD.'),
         exchangeRate: z.coerce.number().positive().optional().describe('Optional exchange rate for multi-currency companies.'),
         lines: z.array(journalLineInputSchema).min(2).max(100).describe('Balanced debit and credit journal entry lines.'),
