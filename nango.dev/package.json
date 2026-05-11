@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "compile": "nango compile",
-    "dev": "nango dev"
+    "dev": "nango dev",
+    "test": "echo 'no tests yet'",
+    "deploy:dev": "nango deploy dev"
   },
   "devDependencies": {
-    "nango": "0.69.43",
+    "nango": "0.70.1",
     "zod": "4.0.5"
   }
 }

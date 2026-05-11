@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,4 +16,41 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm -w nango.dev run compile
+      - name: Compile
+        working-directory: nango.dev
+        run: npm run compile
+      - name: Test
+        working-directory: nango.dev
+        run: npm test
+
+  deploy-dev:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    steps:
+      - name: Verify required secrets
+        env:
+          NANGO_SECRET_KEY_DEV: ${{ secrets.NANGO_SECRET_KEY_DEV }}
+        run: |
+          if [ -z "$NANGO_SECRET_KEY_DEV" ]; then
+            echo "Error: NANGO_SECRET_KEY_DEV secret is not set on the 'dev' environment"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Compile
+        working-directory: nango.dev
+        run: npm run compile
+      - name: Deploy to dev
+        working-directory: nango.dev
+        env:
+          NANGO_SECRET_KEY_DEV: ${{ secrets.NANGO_SECRET_KEY_DEV }}
+        run: npm run deploy:dev
