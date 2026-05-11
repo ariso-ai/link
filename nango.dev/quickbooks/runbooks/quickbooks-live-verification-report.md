@@ -2,7 +2,7 @@
 
 Date: 2026-05-11
 
-This report verifies the seven QuickBooks actions against the authenticated QuickBooks sandbox UI and live Nango action trigger responses. The Nango calls used `POST https://api.nango.dev/action/trigger` with `Provider-Config-Key: quickbooks-sandbox`, `Connection-Id: 2fdc5288-733f-42b6-aceb-ee4b3d4230f6`, and the local dev Nango secret. These are live deployed Nango action calls, not `nango dryrun` calls.
+This report verifies the seven QuickBooks actions against the authenticated QuickBooks sandbox UI and live Nango action trigger responses. The Nango calls used `POST https://api.nango.dev/action/trigger` with `Provider-Config-Key: quickbooks`, `Connection-Id: 2fdc5288-733f-42b6-aceb-ee4b3d4230f6`, and the local dev Nango secret. These are live deployed Nango action calls, not `nango dryrun` calls.
 
 ## Summary
 
@@ -33,7 +33,7 @@ curl --request POST \
   --url https://api.nango.dev/action/trigger \
   --header "Authorization: Bearer $NANGO_SECRET_KEY" \
   --header "Connection-Id: $NANGO_CONNECTION_ID" \
-  --header "Provider-Config-Key: quickbooks-sandbox" \
+  --header "Provider-Config-Key: quickbooks" \
   --header "Content-Type: application/json" \
   --data '{
     "action_name": "<action-name>",
