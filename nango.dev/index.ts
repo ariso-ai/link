@@ -17,3 +17,4 @@ import './linear/actions/add-comment.js';
 // QuickBooks integrations
 import './quickbooks/actions/run-report.js';
 import './quickbooks/actions/list-payments.js';
+import './quickbooks-sandbox/actions/list-payments.js';

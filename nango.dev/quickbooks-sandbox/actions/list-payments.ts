@@ -3,7 +3,7 @@ import {
     execListPayments,
     listPaymentsInputSchema,
     listPaymentsOutputSchema,
-} from './list-payments-shared.js';
+} from '../../quickbooks/actions/list-payments-shared.js';
 
 const action = createAction({
     description: 'List QuickBooks payments received against invoices',
