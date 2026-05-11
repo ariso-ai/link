@@ -3,7 +3,7 @@ import {
     execListCustomers,
     listCustomersInputSchema,
     listCustomersOutputSchema,
-} from './list-customers-shared.js';
+} from '../../quickbooks/actions/list-customers-shared.js';
 
 const action = createAction({
     description: 'List QuickBooks customers with optional active, display name, and updated-since filters',
