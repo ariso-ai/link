@@ -1,0 +1,30 @@
+{
+  "salesReceipts": [
+    {
+      "id": "47",
+      "docNumber": "1014",
+      "txnDate": "2026-04-06",
+      "customer": {
+        "id": "4",
+        "name": "Diego Rodriguez"
+      },
+      "totalAmount": 140,
+      "balance": 0,
+      "depositToAccount": {
+        "id": "4",
+        "name": "Undeposited Funds"
+      },
+      "paymentMethod": {
+        "id": "",
+        "name": ""
+      },
+      "metadata": {
+        "createTime": "2026-04-08T11:40:52-07:00",
+        "lastUpdatedTime": "2026-04-08T11:40:52-07:00"
+      }
+    }
+  ],
+  "startPosition": 1,
+  "maxResults": 1,
+  "totalCount": 1
+}
