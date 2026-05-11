@@ -20,3 +20,4 @@ import './quickbooks/actions/list-customers.js';
 import './quickbooks/actions/list-invoices.js';
 import './quickbooks/actions/list-payments.js';
 import './quickbooks/actions/list-sales-receipts.js';
+import './quickbooks/actions/list-journal-entries.js';
