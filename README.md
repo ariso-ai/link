@@ -1,5 +1,8 @@
 # @ariso-ai/link
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/ariso-ai/link?utm_source=oss&utm_medium=github&utm_campaign=ariso-ai%2Flink&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+![Actions CI](https://github.com/ariso-ai/link/actions/workflows/ci.yml/badge.svg)
+
 Monorepo for Ariso integration packages, managed as an npm workspace.
 
 ## Workspaces

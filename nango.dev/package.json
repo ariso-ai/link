@@ -7,7 +7,8 @@
     "compile": "nango compile",
     "dev": "nango dev",
     "test": "echo 'no tests yet'",
-    "deploy:dev": "nango deploy dev"
+    "deploy:dev": "nango deploy dev",
+    "deploy:prod": "nango deploy prod"
   },
   "devDependencies": {
     "nango": "0.70.1",
