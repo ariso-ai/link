@@ -3,7 +3,7 @@ import {
     execListSalesReceipts,
     listSalesReceiptsInputSchema,
     listSalesReceiptsOutputSchema,
-} from './list-sales-receipts-shared.js';
+} from '../../quickbooks/actions/list-sales-receipts-shared.js';
 
 const action = createAction({
     description: 'List QuickBooks sales receipts for immediately-paid sales',
