@@ -87,17 +87,19 @@ Open the connected QuickBooks sandbox, go to `Customer Hub` or `Sales > Customer
 
 ## Ari Dev App Smoke Test
 
-2026-05-11 result against the dev app chat:
+2026-05-11 result against the dev app chat after disconnecting and reconnecting QuickBooks Sandbox:
 
-![Ari list-customers authorization failure](./02-list-customers-ari-failure.png)
+![Ari list-customers success](./02-list-customers-ari-success.png)
 
-The Ari chat returned `Authorization Failure`, QuickBooks code `120`, HTTP `401`.
+The Ari chat returned `Succeeded` and listed the first five customers from the live QuickBooks Sandbox tool call.
 
-Direct Nango verification after redeploy:
+Direct Nango verification after reconnect:
 
 ```text
+connection 29477c67-32f6-45cf-bfad-513258b9c4c0: HTTP 200, first customer "Amy's Bird Sanctuary"
+connection 7ba05aad-9edf-49d3-b544-d194c573fe7c: HTTP 200, first customer "Amy's Bird Sanctuary"
+connection ae0496bc-cff0-4184-94c4-6871c2a338b1: HTTP 200, first customer "Amy's Bird Sanctuary"
 connection 2fdc5288-733f-42b6-aceb-ee4b3d4230f6: HTTP 200, first customer "Amy's Bird Sanctuary"
-connection db26d92f-f945-4e98-be1a-a5f165161504: HTTP 424 from Nango, upstream QuickBooks HTTP 401, code 120
 ```
 
-Interpretation: the `quickbooks-sandbox` action is deployed and works for valid sandbox connections. The Ari failure matches a stale or unauthorized Nango connection, not a missing action deploy or action code failure.
+Interpretation: the `quickbooks-sandbox` action is deployed and works for valid sandbox connections. If Ari returns QuickBooks `Authorization Failure` code `120`, disconnect and reconnect the QuickBooks Sandbox integration so Ari uses an authorized Nango connection.
