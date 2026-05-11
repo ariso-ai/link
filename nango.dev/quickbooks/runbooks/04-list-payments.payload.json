@@ -1,0 +1,29 @@
+{
+  "payments": [
+    {
+      "id": "128",
+      "txnDate": "2026-04-10",
+      "customer": {
+        "id": "8",
+        "name": "0969 Ocean View Road"
+      },
+      "totalAmount": 387,
+      "unappliedAmount": 0,
+      "depositToAccount": {
+        "id": "4",
+        "name": ""
+      },
+      "paymentMethod": {
+        "id": "",
+        "name": ""
+      },
+      "metadata": {
+        "createTime": "2026-04-10T13:13:33-07:00",
+        "lastUpdatedTime": "2026-04-10T13:13:33-07:00"
+      }
+    }
+  ],
+  "startPosition": 1,
+  "maxResults": 1,
+  "totalCount": 1
+}
