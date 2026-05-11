@@ -16,3 +16,6 @@ import './linear/actions/add-comment.js';
 
 // QuickBooks integrations
 import './quickbooks/actions/run-report.js';
+
+// QuickBooks sandbox aliases
+import './quickbooks-sandbox/actions/run-report.js';
