@@ -17,11 +17,9 @@ source ../.env
 set +a
 
 export NANGO_ENV="${NANGO_ENV:-dev}"
-export NANGO_PROVIDER_CONFIG_KEY="${NANGO_PROVIDER_CONFIG_KEY:-quickbooks-sandbox}"
-export NANGO_CONNECTION_ID="<quickbooks-sandbox-connection-id>"
+export NANGO_PROVIDER_CONFIG_KEY="${NANGO_PROVIDER_CONFIG_KEY:-quickbooks}"
+export NANGO_CONNECTION_ID="<quickbooks-connection-id>"
 ```
-
-Ambiguity: production source lives under `quickbooks`, but the current sandbox provider may still be configured in Nango as `quickbooks-sandbox`. This branch includes a thin `quickbooks-sandbox` wrapper so local dry runs can target the sandbox provider while production can use `quickbooks`.
 
 ## Verify Connection
 
