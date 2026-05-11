@@ -17,8 +17,8 @@ source ../.env
 set +a
 
 export NANGO_ENV="${NANGO_ENV:-dev}"
-export NANGO_PROVIDER_CONFIG_KEY="${NANGO_PROVIDER_CONFIG_KEY:-quickbooks-sandbox}"
-export NANGO_CONNECTION_ID="<quickbooks-sandbox-connection-id>"
+export NANGO_PROVIDER_CONFIG_KEY="${NANGO_PROVIDER_CONFIG_KEY:-quickbooks}"
+export NANGO_CONNECTION_ID="<quickbooks-connection-id>"
 ```
 
 ## Get Company And Accounts
