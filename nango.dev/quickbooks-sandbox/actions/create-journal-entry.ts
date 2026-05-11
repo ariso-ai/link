@@ -3,7 +3,7 @@ import {
     createJournalEntryInputSchema,
     createJournalEntryOutputSchema,
     execCreateJournalEntry,
-} from './create-journal-entry-shared.js';
+} from '../../quickbooks/actions/create-journal-entry-shared.js';
 
 const action = createAction({
     description: 'Create a balanced QuickBooks journal entry',

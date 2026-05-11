@@ -17,3 +17,4 @@ import './linear/actions/add-comment.js';
 // QuickBooks integrations
 import './quickbooks/actions/run-report.js';
 import './quickbooks/actions/create-journal-entry.js';
+import './quickbooks-sandbox/actions/create-journal-entry.js';

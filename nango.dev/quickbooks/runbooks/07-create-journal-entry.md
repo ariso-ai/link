@@ -52,6 +52,28 @@ export CREDIT_ACCOUNT_ID="<bank-liability-equity-or-income-account-id>"
 CI=true npm run compile -- --no-interactive --no-dependency-update
 ```
 
+## Deploy
+
+Deploy the same action code to both provider config keys. `quickbooks-sandbox` is a thin Nango entrypoint that reuses the `quickbooks` action implementation, so this does not duplicate business logic.
+
+```bash
+CI=true npx nango deploy "${NANGO_ENV}" \
+  --integration quickbooks \
+  --action create-journal-entry \
+  --auto-confirm \
+  --no-interactive \
+  --no-dependency-update
+```
+
+```bash
+CI=true npx nango deploy "${NANGO_ENV}" \
+  --integration quickbooks-sandbox \
+  --action create-journal-entry \
+  --auto-confirm \
+  --no-interactive \
+  --no-dependency-update
+```
+
 ## Dry Run
 
 ```bash
@@ -98,3 +120,21 @@ curl --request POST \
 ## Chrome Check
 
 Open the connected QuickBooks sandbox, use the global search for `Nango sandbox create-journal-entry`, and confirm the created journal entry has one debit and one credit line for the same amount.
+
+## Ari Dev App Smoke Test
+
+2026-05-11 result against the dev app chat after deploying `create-journal-entry` to both `quickbooks` and `quickbooks-sandbox`:
+
+[Ari chat](https://dev-eager-lederberg-f353eb.cheetah-oratrice.ts.net/chat?conversationId=50491049-270a-4b5c-bc8c-ab1ccd2cd25c)
+
+![Ari create-journal-entry success](./07-create-journal-entry-ari-success.png)
+
+The Ari chat returned `Success` and created journal entry id `150`, doc number `ARI-CHAT-0511C`, with `debitTotal: 1`, `creditTotal: 1`, and `isBalanced: true`.
+
+Direct Nango verification after deploy:
+
+```text
+connection 29477c67-32f6-45cf-bfad-513258b9c4c0: HTTP 200, created journal entry id 149, docNumber ARI-0511202415, debitTotal 1, creditTotal 1, isBalanced true
+```
+
+Interpretation: the `quickbooks-sandbox` action is deployed and can create a balanced journal entry through both direct Nango and the dev-app Ari chat.
