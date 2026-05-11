@@ -1,11 +1,25 @@
 import type { NangoAction } from 'nango';
 
 export interface QuickBooksQueryResponse<T> {
+    Fault?: QuickBooksFault;
     QueryResponse?: {
         startPosition?: number;
         maxResults?: number;
         totalCount?: number;
-    } & Record<string, T[] | number | undefined>;
+        Fault?: QuickBooksFault;
+    } & Record<string, T[] | number | QuickBooksFault | undefined>;
+}
+
+interface QuickBooksFault {
+    type?: string;
+    Error?: QuickBooksFaultError | QuickBooksFaultError[];
+}
+
+interface QuickBooksFaultError {
+    code?: string;
+    element?: string;
+    Message?: string;
+    Detail?: string;
 }
 
 export interface QuickBooksRef {
@@ -19,6 +33,7 @@ export interface QuickBooksMetadata {
 }
 
 export function escapeQuickBooksString(value: string): string {
+    // QuickBooks Query Language uses backslash escaping for apostrophes.
     return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
@@ -49,20 +64,25 @@ export function metadataToObject(
     };
 }
 
-export function clampQuickBooksLimit(limit: number | undefined): number {
-    return Math.min(Math.max(limit ?? 50, 1), 100);
-}
-
 export function buildQuery(entity: string, clauses: string[], startPosition: number, maxResults: number): string {
     const where = clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '';
     return `SELECT * FROM ${entity}${where} STARTPOSITION ${startPosition} MAXRESULTS ${maxResults}`;
+}
+
+function formatQuickBooksFault(fault: QuickBooksFault): string {
+    const errors = Array.isArray(fault.Error) ? fault.Error : fault.Error ? [fault.Error] : [];
+    const details = errors
+        .map((error) => [error.code, error.element, error.Message, error.Detail].filter(Boolean).join(': '))
+        .filter(Boolean);
+    return [fault.type, ...details].filter(Boolean).join(' | ') || 'Unknown QuickBooks query error';
 }
 
 export async function queryQuickBooks<T>(
     nango: NangoAction,
     companyId: string,
     entity: string,
-    query: string
+    query: string,
+    requestedPage: { startPosition: number; maxResults: number }
 ): Promise<{ records: T[]; startPosition: number; maxResults: number; totalCount: number }> {
     const response = await nango.get<QuickBooksQueryResponse<T>>({
         endpoint: `/v3/company/${companyId}/query`,
@@ -70,13 +90,26 @@ export async function queryQuickBooks<T>(
         retries: 3,
     });
 
-    const queryResponse = response.data.QueryResponse ?? {};
+    if (response.data.Fault) {
+        throw new Error(`QuickBooks query failed: ${formatQuickBooksFault(response.data.Fault)}`);
+    }
+
+    const queryResponse = response.data.QueryResponse;
+
+    if (!queryResponse) {
+        throw new Error('QuickBooks query response missing QueryResponse.');
+    }
+
+    if (queryResponse.Fault) {
+        throw new Error(`QuickBooks query failed: ${formatQuickBooksFault(queryResponse.Fault)}`);
+    }
+
     const records = Array.isArray(queryResponse[entity]) ? (queryResponse[entity] as T[]) : [];
 
     return {
         records,
-        startPosition: typeof queryResponse.startPosition === 'number' ? queryResponse.startPosition : 1,
-        maxResults: typeof queryResponse.maxResults === 'number' ? queryResponse.maxResults : records.length,
+        startPosition: typeof queryResponse.startPosition === 'number' ? queryResponse.startPosition : requestedPage.startPosition,
+        maxResults: typeof queryResponse.maxResults === 'number' ? queryResponse.maxResults : requestedPage.maxResults,
         totalCount: typeof queryResponse.totalCount === 'number' ? queryResponse.totalCount : records.length,
     };
 }

@@ -2,23 +2,26 @@ import { createAction } from 'nango';
 import * as z from 'zod';
 import {
     buildQuery,
-    clampQuickBooksLimit,
     escapeQuickBooksString,
     getCompanyId,
     metadataToObject,
     queryQuickBooks,
     refToObject,
 } from '../helpers/quickbooks.js';
-import { metadataSchema, paginationInputSchema, refSchema } from '../helpers/schemas.js';
+import { isoDateSchema, isoDateTimeSchema, metadataSchema, paginationInputShape, refSchema } from '../helpers/schemas.js';
 
-const inputSchema = z.object({
-    ...paginationInputSchema,
-    customerId: z.string().optional().describe('Filter invoices by QuickBooks CustomerRef value.'),
-    status: z.enum(['open', 'paid']).optional().describe('Filter invoices by open balance or paid balance.'),
-    updatedSince: z.string().optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
-    startDate: z.string().optional().describe('Filter by TxnDate on or after YYYY-MM-DD.'),
-    endDate: z.string().optional().describe('Filter by TxnDate on or before YYYY-MM-DD.'),
-});
+const inputSchema = z
+    .object({
+        ...paginationInputShape,
+        customerId: z.string().optional().describe('Filter invoices by QuickBooks CustomerRef value.'),
+        status: z.enum(['open', 'paid']).optional().describe('Filter invoices by open balance or paid balance.'),
+        updatedSince: isoDateTimeSchema.optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
+        startDate: isoDateSchema.optional().describe('Filter by TxnDate on or after YYYY-MM-DD.'),
+        endDate: isoDateSchema.optional().describe('Filter by TxnDate on or before YYYY-MM-DD.'),
+    })
+    .refine(({ startDate, endDate }) => !startDate || !endDate || startDate <= endDate, {
+        message: 'startDate must be on or before endDate.',
+    });
 
 const invoiceSchema = z.object({
     id: z.string(),
@@ -63,7 +66,7 @@ const action = createAction({
 
     exec: async (nango, input) => {
         const companyId = await getCompanyId(nango);
-        const maxResults = clampQuickBooksLimit(input.maxResults);
+        const maxResults = input.maxResults ?? 50;
         const startPosition = input.startPosition ?? 1;
         const clauses: string[] = [];
 
@@ -78,7 +81,8 @@ const action = createAction({
             nango,
             companyId,
             'Invoice',
-            buildQuery('Invoice', clauses, startPosition, maxResults)
+            buildQuery('Invoice', clauses, startPosition, maxResults),
+            { startPosition, maxResults }
         );
 
         return {

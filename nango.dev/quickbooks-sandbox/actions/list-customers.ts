@@ -2,18 +2,18 @@ import { createAction } from 'nango';
 import * as z from 'zod';
 import {
     buildQuery,
-    clampQuickBooksLimit,
     escapeQuickBooksString,
     getCompanyId,
     metadataToObject,
     queryQuickBooks,
+    refToObject,
 } from '../helpers/quickbooks.js';
-import { metadataSchema, paginationInputSchema, refSchema } from '../helpers/schemas.js';
+import { isoDateTimeSchema, metadataSchema, paginationInputShape, refSchema } from '../helpers/schemas.js';
 
 const inputSchema = z.object({
-    ...paginationInputSchema,
+    ...paginationInputShape,
     active: z.boolean().optional().describe('Filter active/inactive customers. Omit to return both.'),
-    updatedSince: z.string().optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
+    updatedSince: isoDateTimeSchema.optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
     displayName: z.string().optional().describe('Exact customer DisplayName match.'),
 });
 
@@ -62,7 +62,7 @@ const action = createAction({
 
     exec: async (nango, input) => {
         const companyId = await getCompanyId(nango);
-        const maxResults = clampQuickBooksLimit(input.maxResults);
+        const maxResults = input.maxResults ?? 50;
         const startPosition = input.startPosition ?? 1;
         const clauses: string[] = [];
 
@@ -80,7 +80,8 @@ const action = createAction({
             nango,
             companyId,
             'Customer',
-            buildQuery('Customer', clauses, startPosition, maxResults)
+            buildQuery('Customer', clauses, startPosition, maxResults),
+            { startPosition, maxResults }
         );
 
         return {
@@ -94,10 +95,7 @@ const action = createAction({
                 primaryEmail: customer.PrimaryEmailAddr?.Address ?? '',
                 primaryPhone: customer.PrimaryPhone?.FreeFormNumber ?? '',
                 balance: customer.Balance ?? 0,
-                currency: {
-                    id: customer.CurrencyRef?.value ?? '',
-                    name: customer.CurrencyRef?.name ?? '',
-                },
+                currency: refToObject(customer.CurrencyRef),
                 metadata: metadataToObject(customer.MetaData),
             })),
             startPosition: result.startPosition,

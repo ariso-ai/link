@@ -1,6 +1,7 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
 import { getCompanyId } from '../helpers/quickbooks.js';
+import { isoDateSchema } from '../helpers/schemas.js';
 
 const reportSchema = z.enum([
     'ProfitAndLoss',
@@ -14,25 +15,38 @@ const reportSchema = z.enum([
     'AgedPayables',
 ]);
 
+const summarizeColumnBySchema = z.enum([
+    'Days',
+    'Weeks',
+    'Months',
+    'Quarters',
+    'Years',
+    'Customers',
+    'Vendors',
+    'Classes',
+    'Departments',
+    'Employees',
+    'ProductsAndServices',
+]);
+
 const inputSchema = z
     .object({
         report: reportSchema.describe('QuickBooks report endpoint to run.'),
-        startDate: z.string().optional().describe('Report start date in YYYY-MM-DD format.'),
-        endDate: z.string().optional().describe('Report end date in YYYY-MM-DD format.'),
+        startDate: isoDateSchema.describe('Report start date in YYYY-MM-DD format.'),
+        endDate: isoDateSchema.describe('Report end date in YYYY-MM-DD format.'),
         accountingMethod: z.enum(['Cash', 'Accrual']).optional().describe('QuickBooks accounting method for the report.'),
-        summarizeColumnBy: z.string().optional().describe('Optional QuickBooks summarize_column_by parameter.'),
+        summarizeColumnBy: summarizeColumnBySchema.optional().describe('Optional QuickBooks summarize_column_by parameter.'),
         customerId: z.string().optional().describe('Optional customer filter where supported by the report.'),
     })
     .refine(
         (input) => {
-            if (!input.startDate || !input.endDate) return true;
-            const start = Date.parse(`${input.startDate}T00:00:00Z`);
-            const end = Date.parse(`${input.endDate}T00:00:00Z`);
-            if (Number.isNaN(start) || Number.isNaN(end) || end < start) return false;
+            const start = new Date(`${input.startDate}T00:00:00Z`).getTime();
+            const end = new Date(`${input.endDate}T00:00:00Z`).getTime();
+            if (end < start) return false;
             const days = (end - start) / 86_400_000;
             return days <= 186;
         },
-        { message: 'Report date range must be valid and no longer than 186 days.' }
+        { message: 'Report date range must be on or after startDate and no longer than 186 days.' }
     );
 
 const outputSchema = z.object({
@@ -42,7 +56,6 @@ const outputSchema = z.object({
     currency: z.string(),
     columns: z.array(z.unknown()),
     rows: z.array(z.unknown()),
-    raw: z.unknown(),
 });
 
 interface QuickBooksReportResponse {
@@ -91,7 +104,6 @@ const action = createAction({
             currency: response.data.Header?.Currency ?? '',
             columns: response.data.Columns?.Column ?? [],
             rows: response.data.Rows?.Row ?? [],
-            raw: response.data,
         };
     },
 });

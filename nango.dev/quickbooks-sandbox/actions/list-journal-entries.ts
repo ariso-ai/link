@@ -2,21 +2,24 @@ import { createAction } from 'nango';
 import * as z from 'zod';
 import {
     buildQuery,
-    clampQuickBooksLimit,
     escapeQuickBooksString,
     getCompanyId,
     metadataToObject,
     queryQuickBooks,
     refToObject,
 } from '../helpers/quickbooks.js';
-import { metadataSchema, paginationInputSchema, refSchema } from '../helpers/schemas.js';
+import { isoDateSchema, isoDateTimeSchema, metadataSchema, paginationInputShape, refSchema } from '../helpers/schemas.js';
 
-const inputSchema = z.object({
-    ...paginationInputSchema,
-    updatedSince: z.string().optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
-    startDate: z.string().optional().describe('Filter by TxnDate on or after YYYY-MM-DD.'),
-    endDate: z.string().optional().describe('Filter by TxnDate on or before YYYY-MM-DD.'),
-});
+const inputSchema = z
+    .object({
+        ...paginationInputShape,
+        updatedSince: isoDateTimeSchema.optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
+        startDate: isoDateSchema.optional().describe('Filter by TxnDate on or after YYYY-MM-DD.'),
+        endDate: isoDateSchema.optional().describe('Filter by TxnDate on or before YYYY-MM-DD.'),
+    })
+    .refine(({ startDate, endDate }) => !startDate || !endDate || startDate <= endDate, {
+        message: 'startDate must be on or before endDate.',
+    });
 
 const journalLineSchema = z.object({
     id: z.string(),
@@ -32,7 +35,7 @@ const journalEntrySchema = z.object({
     txnDate: z.string(),
     privateNote: z.string(),
     currency: refSchema,
-    exchangeRate: z.number(),
+    exchangeRate: z.number().nullable(),
     debitTotal: z.number(),
     creditTotal: z.number(),
     isBalanced: z.boolean(),
@@ -85,7 +88,7 @@ const action = createAction({
 
     exec: async (nango, input) => {
         const companyId = await getCompanyId(nango);
-        const maxResults = clampQuickBooksLimit(input.maxResults);
+        const maxResults = input.maxResults ?? 50;
         const startPosition = input.startPosition ?? 1;
         const clauses: string[] = [];
 
@@ -97,7 +100,8 @@ const action = createAction({
             nango,
             companyId,
             'JournalEntry',
-            buildQuery('JournalEntry', clauses, startPosition, maxResults)
+            buildQuery('JournalEntry', clauses, startPosition, maxResults),
+            { startPosition, maxResults }
         );
 
         return {
@@ -129,10 +133,10 @@ const action = createAction({
                     txnDate: entry.TxnDate ?? '',
                     privateNote: entry.PrivateNote ?? '',
                     currency: refToObject(entry.CurrencyRef),
-                    exchangeRate: entry.ExchangeRate ?? 0,
+                    exchangeRate: entry.ExchangeRate ?? null,
                     debitTotal,
                     creditTotal,
-                    isBalanced: debitTotal === creditTotal,
+                    isBalanced: Math.abs(debitTotal - creditTotal) < 0.005,
                     lines,
                     metadata: metadataToObject(entry.MetaData),
                 };
