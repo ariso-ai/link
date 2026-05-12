@@ -13,3 +13,6 @@ import './linear/actions/list-issues.js';
 import './linear/actions/get-issue.js';
 import './linear/actions/update-issue.js';
 import './linear/actions/add-comment.js';
+
+// QuickBooks integrations
+import './quickbooks/actions/run-report.js';
