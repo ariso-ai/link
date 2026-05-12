@@ -149,6 +149,10 @@ function roundMoney(value: number): number {
     return amountToCents(value) / 100;
 }
 
+function amountsBalance(debitTotal: number, creditTotal: number): boolean {
+    return Math.abs(debitTotal - creditTotal) < 0.005;
+}
+
 function totalCents(lines: CreateJournalLineInput[], postingType: 'Debit' | 'Credit'): number {
     return lines
         .filter((line) => line.postingType === postingType)
@@ -234,7 +238,7 @@ function toOutput(entry: QuickBooksJournalEntry): z.infer<typeof createJournalEn
         exchangeRate: entry.ExchangeRate ?? 1,
         debitTotal,
         creditTotal,
-        isBalanced: amountToCents(debitTotal) === amountToCents(creditTotal),
+        isBalanced: amountsBalance(debitTotal, creditTotal),
         lines,
         metadata: metadataToObject(entry.MetaData),
     };
