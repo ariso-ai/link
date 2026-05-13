@@ -1,0 +1,42 @@
+name: Deploy Prod
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-prod:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: prod
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - name: Verify required secrets
+        env:
+          NANGO_SECRET_KEY_PROD: ${{ secrets.NANGO_SECRET_KEY_PROD }}
+        run: |
+          if [ -z "$NANGO_SECRET_KEY_PROD" ]; then
+            echo "Error: NANGO_SECRET_KEY_PROD secret is not set on the 'prod' environment"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Compile
+        working-directory: nango.dev
+        run: npm run compile
+      - name: Deploy to prod
+        working-directory: nango.dev
+        env:
+          NANGO_SECRET_KEY_PROD: ${{ secrets.NANGO_SECRET_KEY_PROD }}
+        run: npm run deploy:prod
