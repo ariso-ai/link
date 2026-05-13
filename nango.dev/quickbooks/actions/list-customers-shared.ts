@@ -65,7 +65,7 @@ export async function execListCustomers(
         clauses.push(`Active = ${input.active ? 'true' : 'false'}`);
     }
     if (input.updatedSince) {
-        clauses.push(`MetaData.LastUpdatedTime > '${escapeQuickBooksString(input.updatedSince)}'`);
+        clauses.push(`MetaData.LastUpdatedTime >= '${escapeQuickBooksString(input.updatedSince)}'`);
     }
     if (input.displayName) {
         clauses.push(`DisplayName = '${escapeQuickBooksString(input.displayName)}'`);
