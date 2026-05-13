@@ -87,7 +87,7 @@ export async function execListJournalEntries(
     const startPosition = input.startPosition ?? 1;
     const clauses: string[] = [];
 
-    if (input.updatedSince) clauses.push(`MetaData.LastUpdatedTime > '${escapeQuickBooksString(input.updatedSince)}'`);
+    if (input.updatedSince) clauses.push(`MetaData.LastUpdatedTime >= '${escapeQuickBooksString(input.updatedSince)}'`);
     if (input.startDate) clauses.push(`TxnDate >= '${escapeQuickBooksString(input.startDate)}'`);
     if (input.endDate) clauses.push(`TxnDate <= '${escapeQuickBooksString(input.endDate)}'`);
 
