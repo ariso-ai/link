@@ -68,7 +68,7 @@ export async function execListInvoices(
     if (input.customerId) clauses.push(`CustomerRef = '${escapeQuickBooksString(input.customerId)}'`);
     if (input.status === 'open') clauses.push('Balance > 0');
     if (input.status === 'paid') clauses.push('Balance = 0');
-    if (input.updatedSince) clauses.push(`MetaData.LastUpdatedTime > '${escapeQuickBooksString(input.updatedSince)}'`);
+    if (input.updatedSince) clauses.push(`MetaData.LastUpdatedTime >= '${escapeQuickBooksString(input.updatedSince)}'`);
     if (input.startDate) clauses.push(`TxnDate >= '${escapeQuickBooksString(input.startDate)}'`);
     if (input.endDate) clauses.push(`TxnDate <= '${escapeQuickBooksString(input.endDate)}'`);
 
