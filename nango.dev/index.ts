@@ -18,14 +18,11 @@ import './linear/actions/add-comment.js';
 import './quickbooks/actions/run-report.js';
 import './quickbooks/actions/list-customers.js';
 import './quickbooks-sandbox/actions/list-customers.js';
-<<<<<<< codex/qb-journal-entries-flat
 import './quickbooks/actions/list-journal-entries.js';
 import './quickbooks-sandbox/actions/list-journal-entries.js';
-=======
 import './quickbooks/actions/list-sales-receipts.js';
 import './quickbooks-sandbox/actions/list-sales-receipts.js';
 import './quickbooks/actions/list-payments.js';
 import './quickbooks-sandbox/actions/list-payments.js';
 import './quickbooks/actions/list-invoices.js';
 import './quickbooks-sandbox/actions/list-invoices.js';
->>>>>>> main
