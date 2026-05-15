@@ -13,7 +13,12 @@ const listCyclesInputSchema = z.object({
         .enum(['active', 'next', 'previous', 'future', 'past'])
         .optional()
         .describe('Only return active / next / previous / future / past cycles'),
-    limit: z.number().optional().describe('Maximum number of cycles to return (default 25, max 100)'),
+    limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Maximum number of cycles to return (default 25, max 100)'),
     after: z.string().optional().describe('Pagination cursor from a previous response'),
 });
 

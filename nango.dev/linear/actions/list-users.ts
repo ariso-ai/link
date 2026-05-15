@@ -12,9 +12,14 @@ const listUsersInputSchema = z.object({
         .string()
         .optional()
         .describe('Filter users by name, displayName, or email (case-insensitive substring match)'),
-    active: z.boolean().optional().describe('Only return active users when true, or inactive users when false'),
-    admin: z.boolean().optional().describe('Only return admins when true'),
-    limit: z.number().optional().describe('Maximum number of users to return (default 50, max 100)'),
+    active: z.boolean().optional().describe('When true, only return active users; when false, only return deactivated users'),
+    admin: z.boolean().optional().describe('When true, only return admins; when false, only return non-admins'),
+    limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Maximum number of users to return (default 50, max 100)'),
     after: z.string().optional().describe('Pagination cursor from a previous response'),
 });
 

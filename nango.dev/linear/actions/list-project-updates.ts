@@ -13,7 +13,12 @@ const listProjectUpdatesInputSchema = z.object({
         .enum(['onTrack', 'atRisk', 'offTrack'])
         .optional()
         .describe('Filter by update health'),
-    limit: z.number().optional().describe('Maximum number of updates to return (default 25, max 100)'),
+    limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Maximum number of updates to return (default 25, max 100)'),
     after: z.string().optional().describe('Pagination cursor from a previous response'),
 });
 

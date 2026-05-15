@@ -17,7 +17,12 @@ const listIssuesInputSchema = z.object({
         .describe('Filter by workflow state category'),
     assigneeEmail: z.string().optional().describe('Filter by assignee email'),
     query: z.string().optional().describe('Full-text search across title and description'),
-    limit: z.number().optional().describe('Maximum number of issues to return (default 50, max 100)'),
+    limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Maximum number of issues to return (default 50, max 100)'),
     after: z.string().optional().describe('Pagination cursor from a previous response'),
 });
 

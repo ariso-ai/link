@@ -15,7 +15,12 @@ const listProjectsInputSchema = z.object({
         .describe('Filter by project state'),
     leadEmail: z.string().optional().describe('Filter by project lead email'),
     query: z.string().optional().describe('Full-text search across name and description'),
-    limit: z.number().optional().describe('Maximum number of projects to return (default 50, max 100)'),
+    limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Maximum number of projects to return (default 50, max 100)'),
     after: z.string().optional().describe('Pagination cursor from a previous response'),
 });
 

@@ -9,7 +9,12 @@ import {
 
 const listTeamsInputSchema = z.object({
     query: z.string().optional().describe('Filter teams whose name contains this string (case-insensitive)'),
-    limit: z.number().optional().describe('Maximum number of teams to return (default 50, max 100)'),
+    limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe('Maximum number of teams to return (default 50, max 100)'),
     after: z.string().optional().describe('Pagination cursor from a previous response'),
 });
 

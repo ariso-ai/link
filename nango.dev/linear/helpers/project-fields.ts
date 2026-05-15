@@ -143,7 +143,7 @@ export const projectUpdateFieldsFragment = `
 export interface LinearProjectUpdateRaw {
     id: string;
     body: string;
-    health: string;
+    health: string | null;
     url: string;
     createdAt: string;
     updatedAt: string;
@@ -154,7 +154,7 @@ export interface LinearProjectUpdateRaw {
 export const linearProjectUpdateSchema = z.object({
     id: z.string(),
     body: z.string(),
-    health: z.string(),
+    health: z.string().nullable(),
     url: z.string(),
     user: z.object({ id: z.string(), name: z.string(), email: z.string() }).nullable(),
     project: z.object({ id: z.string(), name: z.string() }),
