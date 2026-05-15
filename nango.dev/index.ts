@@ -26,3 +26,5 @@ import './quickbooks/actions/list-payments.js';
 import './quickbooks-sandbox/actions/list-payments.js';
 import './quickbooks/actions/list-invoices.js';
 import './quickbooks-sandbox/actions/list-invoices.js';
+import './quickbooks/actions/create-journal-entry.js';
+import './quickbooks-sandbox/actions/create-journal-entry.js';

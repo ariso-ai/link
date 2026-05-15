@@ -13,7 +13,7 @@ import { isoDateTimeSchema, metadataSchema, paginationInputShape, refSchema } fr
 export const listCustomersInputSchema = z.object({
     ...paginationInputShape,
     active: z.boolean().optional().describe('Filter active/inactive customers. Omit to return both.'),
-    updatedSince: isoDateTimeSchema.optional().describe('Filter by MetaData.LastUpdatedTime greater than this ISO timestamp.'),
+    updatedSince: isoDateTimeSchema.optional().describe('Filter by MetaData.LastUpdatedTime on or after this ISO timestamp.'),
     displayName: z.string().optional().describe('Exact customer DisplayName match.'),
 });
 
