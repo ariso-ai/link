@@ -13,9 +13,16 @@ const journalEntitySchema = inputRefSchema.extend({
     type: z.enum(['Customer', 'Vendor', 'Employee']),
 });
 
+const centsAmountSchema = z.coerce
+    .number()
+    .positive()
+    .refine((value) => Math.abs(Math.round(value * 100) - value * 100) < 1e-9, {
+        message: 'Amount must be a positive number with no more than two decimal places.',
+    });
+
 const journalLineInputSchema = z.object({
     postingType: z.enum(['Debit', 'Credit']).describe('Whether this line posts as a debit or a credit.'),
-    amount: z.coerce.number().positive().describe('Positive amount for this line. Posting type controls debit or credit.'),
+    amount: centsAmountSchema.describe('Positive amount for this line. Posting type controls debit or credit.'),
     accountId: z.string().min(1).describe('QuickBooks account Id for this line.'),
     accountName: z.string().optional().describe('Optional QuickBooks account name for readability.'),
     description: z.string().optional().describe('Optional line description.'),
