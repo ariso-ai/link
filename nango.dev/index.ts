@@ -28,3 +28,5 @@ import './quickbooks/actions/list-invoices.js';
 import './quickbooks-sandbox/actions/list-invoices.js';
 import './quickbooks/actions/create-journal-entry.js';
 import './quickbooks-sandbox/actions/create-journal-entry.js';
+import './quickbooks/actions/query-entities.js';
+import './quickbooks-sandbox/actions/query-entities.js';
