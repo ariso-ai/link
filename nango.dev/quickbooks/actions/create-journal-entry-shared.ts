@@ -260,7 +260,6 @@ export async function execCreateJournalEntry(
         method: 'POST',
         endpoint: `/v3/company/${companyId}/journalentry`,
         data: buildQuickBooksJournalEntry(input),
-        retries: 3,
     });
 
     if (response.data.Fault) {
