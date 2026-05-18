@@ -6,11 +6,12 @@
   "scripts": {
     "compile": "nango compile",
     "dev": "nango dev",
-    "test": "echo 'no tests yet'",
+    "test": "node scripts/validate-graphql.js",
     "deploy:dev": "nango deploy dev",
     "deploy:prod": "nango deploy prod"
   },
   "devDependencies": {
+    "graphql": "^16.14.0",
     "nango": "0.70.1",
     "zod": "4.3.6"
   }

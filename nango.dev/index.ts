@@ -13,6 +13,18 @@ import './linear/actions/list-issues.js';
 import './linear/actions/get-issue.js';
 import './linear/actions/update-issue.js';
 import './linear/actions/add-comment.js';
+import './linear/actions/list-projects.js';
+import './linear/actions/get-project.js';
+import './linear/actions/create-project.js';
+import './linear/actions/update-project.js';
+import './linear/actions/list-project-updates.js';
+import './linear/actions/add-project-update.js';
+import './linear/actions/list-cycles.js';
+import './linear/actions/get-active-cycle.js';
+import './linear/actions/list-teams.js';
+import './linear/actions/get-team.js';
+import './linear/actions/list-users.js';
+import './linear/actions/get-user.js';
 
 // QuickBooks integrations
 import './quickbooks/actions/run-report.js';
