@@ -55,7 +55,7 @@ const action = createAction({
         const first = Math.min(input.limit ?? 50, 100);
 
         const filter: Record<string, unknown> = {};
-        if (input.teamKey) filter['accessibleTeams'] = { key: { eq: input.teamKey } };
+        if (input.teamKey) filter['accessibleTeams'] = { some: { key: { eq: input.teamKey } } };
         if (input.state) filter['state'] = { eq: input.state };
         if (input.leadEmail) filter['lead'] = { email: { eq: input.leadEmail } };
         if (input.query) {
