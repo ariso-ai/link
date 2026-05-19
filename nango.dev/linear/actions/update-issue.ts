@@ -85,7 +85,7 @@ const action = createAction({
                 query: mutation,
                 variables: { id: input.issueId, input: updateInput },
             },
-            retries: 3,
+            retries: 0,
         });
 
         if (response.data.errors?.length) {

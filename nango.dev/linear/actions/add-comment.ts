@@ -61,7 +61,7 @@ const action = createAction({
                     input: { issueId: input.issueId, body: input.body },
                 },
             },
-            retries: 3,
+            retries: 0,
         });
 
         if (response.data.errors?.length) {

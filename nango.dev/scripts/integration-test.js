@@ -136,6 +136,13 @@ async function main() {
             const r = await runAction('get-user', { userId: userEmail });
             return r.id;
         });
+        await check('list-users (query filter)', async () => {
+            // Use the local part of the email to confirm the or-filter (name/displayName/email contains)
+            // is accepted by Linear's UserFilter.
+            const local = userEmail.split('@')[0].slice(0, 4);
+            const r = await runAction('list-users', { query: local, limit: 5 });
+            return `${r.users.length} match(es) for "${local}"`;
+        });
     }
 
     if (projectId) {
@@ -167,15 +174,35 @@ async function main() {
     }
 
     if (teamKey) {
-        await check('list-cycles', async () => {
+        await check('list-cycles (bootstrap team)', async () => {
             const r = await runAction('list-cycles', { teamKey, limit: 3 });
             return `${r.cycles.length} cycle(s)`;
         });
-        await checkExpectedError(
-            'get-active-cycle',
-            () => runAction('get-active-cycle', { teamKey }),
-            /No active cycle found/,
-        );
+
+        // Find a team that actually has an active cycle so we exercise the happy path.
+        // Falls back to the expected-error path only if no team in the workspace runs cycles.
+        const teamsResult = await runAction('list-teams', { limit: 25 });
+        let teamWithActiveCycle = null;
+        for (const t of teamsResult.teams) {
+            const r = await runAction('list-cycles', { teamKey: t.key, type: 'active', limit: 1 });
+            if (r.cycles.length) {
+                teamWithActiveCycle = t.key;
+                break;
+            }
+        }
+
+        if (teamWithActiveCycle) {
+            await check(`get-active-cycle (${teamWithActiveCycle}, happy path)`, async () => {
+                const r = await runAction('get-active-cycle', { teamKey: teamWithActiveCycle });
+                return `cycle #${r.number} ends ${r.endsAt}`;
+            });
+        } else {
+            await checkExpectedError(
+                'get-active-cycle (no team has an active cycle)',
+                () => runAction('get-active-cycle', { teamKey }),
+                /No active cycle found/,
+            );
+        }
     }
 
     const failed = results.filter((r) => r.status === 'fail').length;

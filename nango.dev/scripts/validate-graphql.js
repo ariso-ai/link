@@ -1,16 +1,22 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
-import { parse, GraphQLError } from 'graphql';
+import { parse, validate, buildClientSchema, GraphQLError } from 'graphql';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const linearDir = join(here, '..', 'linear');
 const fragmentsDir = join(linearDir, 'helpers');
 const actionsDir = join(linearDir, 'actions');
+const schemaPath = join(linearDir, 'schema.introspection.json');
 
 const fragmentExportRegex = /export\s+const\s+(\w+Fragment)\s*=\s*`([\s\S]*?)`/g;
 const graphqlTemplateRegex = /`([^`]*?\b(?:query|mutation)\s+\w+[\s\S]*?)`/g;
 const interpolationRegex = /\$\{(\w+)\}/g;
+
+async function loadSchema() {
+    const introspection = JSON.parse(await readFile(schemaPath, 'utf8'));
+    return buildClientSchema(introspection);
+}
 
 async function loadFragments() {
     const fragments = {};
@@ -41,7 +47,7 @@ function resolveInterpolations(template, fragments) {
     return unresolved ? null : resolved;
 }
 
-async function validateActionFile(filePath, fragments) {
+async function validateActionFile(filePath, fragments, schema) {
     const contents = await readFile(filePath, 'utf8');
     const failures = [];
     const rel = relative(linearDir, filePath);
@@ -61,13 +67,23 @@ async function validateActionFile(filePath, fragments) {
             continue;
         }
 
+        let document;
         try {
-            parse(resolved);
+            document = parse(resolved);
         } catch (err) {
             const msg = err instanceof GraphQLError ? err.message : String(err);
             failures.push({
                 file: rel,
                 error: `GraphQL parse error in template #${templateCount}: ${msg}`,
+            });
+            continue;
+        }
+
+        const validationErrors = validate(schema, document);
+        for (const err of validationErrors) {
+            failures.push({
+                file: rel,
+                error: `GraphQL schema validation in template #${templateCount}: ${err.message}`,
             });
         }
     }
@@ -83,13 +99,14 @@ async function validateActionFile(filePath, fragments) {
 }
 
 async function main() {
+    const schema = await loadSchema();
     const fragments = await loadFragments();
     const fragmentNames = Object.keys(fragments);
     if (fragmentNames.length === 0) {
         console.error('No GraphQL fragments found in linear/helpers');
         process.exit(1);
     }
-    console.log(`Loaded ${fragmentNames.length} fragment(s): ${fragmentNames.join(', ')}`);
+    console.log(`Loaded Linear schema + ${fragmentNames.length} fragment(s)`);
 
     const actionFiles = (await readdir(actionsDir))
         .filter((f) => f.endsWith('.ts'))
@@ -97,7 +114,7 @@ async function main() {
 
     const allFailures = [];
     for (const file of actionFiles) {
-        const failures = await validateActionFile(file, fragments);
+        const failures = await validateActionFile(file, fragments, schema);
         allFailures.push(...failures);
     }
 
@@ -109,7 +126,7 @@ async function main() {
         process.exit(1);
     }
 
-    console.log(`\nAll ${actionFiles.length} Linear action(s) have valid GraphQL queries.`);
+    console.log(`All ${actionFiles.length} Linear action(s) validate against Linear's schema.`);
 }
 
 main().catch((err) => {

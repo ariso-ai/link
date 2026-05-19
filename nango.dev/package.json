@@ -8,6 +8,8 @@
     "dev": "nango dev",
     "test": "node scripts/validate-graphql.js",
     "test:integration": "NANGO_CLI_UPGRADE_MODE=ignore nango compile && node scripts/integration-test.js",
+    "test:mutations": "NANGO_CLI_UPGRADE_MODE=ignore nango compile && node scripts/mutation-test.js",
+    "schema:refresh": "node scripts/fetch-linear-schema.js",
     "deploy:dev": "nango deploy dev",
     "deploy:prod": "nango deploy prod"
   },
