@@ -11,7 +11,6 @@ export const projectFieldsFragment = `
     priorityLabel
     progress
     scope
-    completedScope
     startDate
     targetDate
     startedAt
@@ -51,7 +50,6 @@ export interface LinearProjectRaw {
     priorityLabel: string;
     progress: number;
     scope: number;
-    completedScope: number;
     startDate: string | null;
     targetDate: string | null;
     startedAt: string | null;
@@ -77,7 +75,6 @@ export const linearProjectSchema = z.object({
     priorityLabel: z.string(),
     progress: z.number(),
     scope: z.number(),
-    completedScope: z.number(),
     startDate: z.string().nullable(),
     targetDate: z.string().nullable(),
     startedAt: z.string().nullable(),
@@ -106,7 +103,6 @@ export function mapLinearProject(project: LinearProjectRaw): LinearProject {
         priorityLabel: project.priorityLabel,
         progress: project.progress,
         scope: project.scope,
-        completedScope: project.completedScope,
         startDate: project.startDate,
         targetDate: project.targetDate,
         startedAt: project.startedAt,
