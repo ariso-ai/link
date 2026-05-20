@@ -480,6 +480,32 @@ async function paginationContracts() {
         );
         return `page1=${page1.issues[0].identifier}, page2=${page2.issues[0].identifier}`;
     });
+
+    await assertContract('list-issues paginated walk: no duplicates, terminates cleanly', async () => {
+        const seen = new Set();
+        let cursor = null;
+        let pages = 0;
+        const maxPages = 5;
+        while (pages < maxPages) {
+            const r = await runAction('list-issues', {
+                teamKey: bootstrap.team.key,
+                limit: 5,
+                after: cursor ?? undefined,
+            });
+            for (const issue of r.issues) {
+                assert(!seen.has(issue.id), `duplicate ${issue.identifier} across pages`);
+                seen.add(issue.id);
+            }
+            pages++;
+            if (!r.hasNextPage) {
+                assert(r.endCursor === null || r.endCursor !== undefined, 'cursor shape on last page');
+                return `${pages} page(s), ${seen.size} unique issues, terminated cleanly`;
+            }
+            assert(r.endCursor !== null, `hasNextPage:true but endCursor is null on page ${pages}`);
+            cursor = r.endCursor;
+        }
+        return `${pages} page(s), ${seen.size} unique issues (capped at ${maxPages})`;
+    });
 }
 
 // ===========================================================================
@@ -714,11 +740,114 @@ async function mutationContracts() {
         });
     });
 
-    // Cleanup: archive project + issue
+    // ----- Round-3 additions -----
+
+    // statusId round-trip — high-blast-radius mutation field with no prior coverage
+    await assertContract('update-project(statusId): project status persists', async () => {
+        const data = await linearGraphQL(
+            `query { organization { projectStatuses { id name type } } }`,
+        );
+        const statuses = data.organization.projectStatuses;
+        const current = await linearGraphQL(
+            `query($id: String!) { project(id: $id) { status { id name type } } }`,
+            { id: project.id },
+        );
+        const currentStatusId = current.project.status?.id;
+        const target = statuses.find((s) => s.id !== currentStatusId);
+        if (!target) return 'workspace has only one project status, skipping';
+        await runAction('update-project', { projectId: project.id, statusId: target.id });
+        const reread = await readAfterWrite(async () => {
+            const r = await linearGraphQL(
+                `query($id: String!) { project(id: $id) { status { id name } } }`,
+                { id: project.id },
+            );
+            assert(r.project.status?.id === target.id, `status not persisted: got ${r.project.status?.id}`);
+            return r.project.status;
+        });
+        return `status → ${reread.name}`;
+    });
+
+    // leadId: null — clear a previously-set lead
+    await assertContract('update-project(leadId=null) clears the lead', async () => {
+        await runAction('update-project', { projectId: project.id, leadId: bootstrap.viewer.id });
+        await readAfterWrite(async () => {
+            const r = await runAction('get-project', { projectId: project.id });
+            assert(r.lead?.id === bootstrap.viewer.id, `lead was not set`);
+            return r;
+        });
+        await runAction('update-project', { projectId: project.id, leadId: null });
+        await readAfterWrite(async () => {
+            const r = await runAction('get-project', { projectId: project.id });
+            assert(r.lead === null, `expected lead null, got ${JSON.stringify(r.lead)}`);
+            return r;
+        });
+        return 'set → cleared';
+    });
+
+    // Multi-team create-project — branch otherwise unexercised
+    const teams = await runAction('list-teams', { limit: 25 });
+    const secondTeam = teams.teams.find((t) => t.id !== bootstrap.team.id);
+    let multiTeamProject;
+    if (secondTeam) {
+        await assertContract('create-project(teamIds=[A,B]) attaches both teams', async () => {
+            multiTeamProject = await runAction('create-project', {
+                name: '[VERIFY-TEST] multi-team safe to delete',
+                teamIds: [bootstrap.team.id, secondTeam.id],
+            });
+            created.push({ kind: 'project', id: multiTeamProject.id, url: multiTeamProject.url });
+            const ids = new Set(multiTeamProject.teams.map((t) => t.id));
+            assert(ids.has(bootstrap.team.id), `missing primary team`);
+            assert(ids.has(secondTeam.id), `missing second team ${secondTeam.key}`);
+            return `teams: ${multiTeamProject.teams.map((t) => t.key).join(', ')}`;
+        });
+    } else {
+        record('create-project(multi-team)', 'skip', 'workspace has only one team');
+    }
+
+    // Empty-body / empty-teamIds Zod boundary checks
+    await assertThrows(
+        'add-comment(body="") rejected by Zod',
+        () => runAction('add-comment', { issueId: issue.id, body: '' }),
+        /Too small|min|at least/i,
+    );
+    await assertThrows(
+        'create-project(teamIds=[]) rejected by Zod',
+        () => runAction('create-project', { name: 'x', teamIds: [] }),
+        /Too small|min|at least/i,
+    );
+
+    // Unicode round-trip — Linear and the mapper should preserve every codepoint
+    await assertContract('update-issue with unicode/emoji title round-trips byte-for-byte', async () => {
+        const unicode = 'Test 🎉 Café — naïve 中文';
+        await runAction('update-issue', { issueId: issue.id, title: unicode });
+        await readAfterWrite(async () => {
+            const r = await runAction('get-issue', { issueId: issue.id });
+            assert(r.title === unicode, `unicode mangled: ${JSON.stringify(r.title)}`);
+            return r;
+        });
+        return 'preserved';
+    });
+
+    // Concurrent writes — two parallel add-comments produce distinct IDs (no idempotency confusion)
+    await assertContract('concurrent add-comment calls produce distinct comments', async () => {
+        const [c1, c2] = await Promise.all([
+            runAction('add-comment', { issueId: issue.id, body: 'race-A-' + Math.random() }),
+            runAction('add-comment', { issueId: issue.id, body: 'race-B-' + Math.random() }),
+        ]);
+        created.push({ kind: 'comment', id: c1.id, url: c1.url });
+        created.push({ kind: 'comment', id: c2.id, url: c2.url });
+        assert(c1.id !== c2.id, `parallel add-comment returned same id`);
+        return `${c1.id.slice(0, 8)} vs ${c2.id.slice(0, 8)}`;
+    });
+
+    // Cleanup: archive project + issue + multi-team project
     console.log('\nCleanup (archive via raw API)...');
     await linearGraphQL(`mutation { projectArchive(id: "${project.id}") { success } }`, {});
     await linearGraphQL(`mutation { issueArchive(id: "${issue.id}") { success } }`, {});
-    record('cleanup: archive project + issue', 'pass', '');
+    if (multiTeamProject) {
+        await linearGraphQL(`mutation { projectArchive(id: "${multiTeamProject.id}") { success } }`, {});
+    }
+    record('cleanup: archive project(s) + issue', 'pass', '');
 }
 
 // ===========================================================================
