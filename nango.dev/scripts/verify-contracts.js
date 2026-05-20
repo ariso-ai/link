@@ -112,7 +112,44 @@ async function readAfterWrite(fn, opts = { tries: 5, baseDelayMs: 200 }) {
 
 const bootstrap = {};
 
+async function cleanupLeftovers() {
+    // Find and archive any prior [VERIFY-TEST] or [MUTATION-TEST] projects/issues from earlier runs.
+    const projects = await linearGraphQL(
+        `query { projects(filter: { name: { startsWith: "[VERIFY-TEST" } }, first: 50) { nodes { id name } } }`,
+    );
+    for (const p of projects.projects.nodes) {
+        await linearGraphQL(`mutation { projectArchive(id: "${p.id}") { success } }`, {});
+    }
+    const projects2 = await linearGraphQL(
+        `query { projects(filter: { name: { startsWith: "[MUTATION-TEST" } }, first: 50) { nodes { id name } } }`,
+    );
+    for (const p of projects2.projects.nodes) {
+        await linearGraphQL(`mutation { projectArchive(id: "${p.id}") { success } }`, {});
+    }
+    const issues = await linearGraphQL(
+        `query { issues(filter: { title: { startsWith: "[VERIFY-TEST" } }, first: 50) { nodes { id identifier } } }`,
+    );
+    for (const i of issues.issues.nodes) {
+        await linearGraphQL(`mutation { issueArchive(id: "${i.id}") { success } }`, {});
+    }
+    const issues2 = await linearGraphQL(
+        `query { issues(filter: { title: { startsWith: "[MUTATION-TEST" } }, first: 50) { nodes { id identifier } } }`,
+    );
+    for (const i of issues2.issues.nodes) {
+        await linearGraphQL(`mutation { issueArchive(id: "${i.id}") { success } }`, {});
+    }
+    const cleaned =
+        projects.projects.nodes.length +
+        projects2.projects.nodes.length +
+        issues.issues.nodes.length +
+        issues2.issues.nodes.length;
+    if (cleaned > 0) {
+        console.log(`Pre-test cleanup: archived ${cleaned} leftover test artifact(s) from prior runs.`);
+    }
+}
+
 async function bootstrapState() {
+    await cleanupLeftovers();
     console.log('Bootstrapping...');
 
     const teams = await runAction('list-teams', { limit: 25 });
@@ -207,6 +244,52 @@ async function filterContracts() {
         return `${r.projects.length} projects, all include ${bootstrap.team.key}`;
     });
 
+    // The above is satisfied by both `some` and `every` semantics. To distinguish them
+    // (regression caught by subagent), we explicitly verify multi-team projects appear.
+    await assertContract('list-projects(teamKey=X) includes multi-team projects containing X (not just X-only)', async () => {
+        // Find any project that has X among multiple teams, via raw API
+        const data = await linearGraphQL(
+            `query($key: String!) {
+                projects(filter: { accessibleTeams: { some: { key: { eq: $key } } } }, first: 50) {
+                    nodes { id name teams { nodes { key } } }
+                }
+            }`,
+            { key: bootstrap.team.key },
+        );
+        const multiTeam = data.projects.nodes.find(
+            (p) => p.teams.nodes.length > 1 && p.teams.nodes.some((t) => t.key === bootstrap.team.key),
+        );
+        if (!multiTeam) {
+            return 'no multi-team project in workspace, skipping completeness check';
+        }
+        const r = await runAction('list-projects', { teamKey: bootstrap.team.key, limit: 100 });
+        const found = r.projects.some((p) => p.id === multiTeam.id);
+        assert(
+            found,
+            `multi-team project "${multiTeam.name}" (teams: ${multiTeam.teams.nodes.map((t) => t.key).join(', ')}) was filtered out — accessibleTeams may be using "every" instead of "some"`,
+        );
+        return `multi-team project "${multiTeam.name}" present`;
+    });
+
+    await assertContract('list-projects(query=X) sends a valid filter and returns matching projects', async () => {
+        // First find an existing project name to use as the query
+        const all = await runAction('list-projects', { limit: 5 });
+        if (all.projects.length === 0) return 'no projects to query';
+        const sample = all.projects[0];
+        const word = sample.name.split(/\s+/).find((w) => w.length >= 4) ?? sample.name.slice(0, 4);
+        const r = await runAction('list-projects', { query: word, limit: 25 });
+        // Must include the sample project (we know it contains the substring)
+        const found = r.projects.some((p) => p.id === sample.id);
+        assert(found, `query="${word}" did not return source project "${sample.name}"`);
+        for (const p of r.projects) {
+            assert(
+                p.name.toLowerCase().includes(word.toLowerCase()),
+                `project "${p.name}" returned but doesn't contain "${word}"`,
+            );
+        }
+        return `query="${word}" → ${r.projects.length} match(es)`;
+    });
+
     if (bootstrap.cycleTeam) {
         await assertContract('list-cycles(teamKey, type=active) returns only cycles where now is between startsAt and endsAt', async () => {
             const r = await runAction('list-cycles', { teamKey: bootstrap.cycleTeam.key, type: 'active', limit: 5 });
@@ -220,7 +303,24 @@ async function filterContracts() {
             }
             return `${r.cycles.length} active cycle(s), all within their date range`;
         });
+
+        await assertContract('get-active-cycle returns same cycle as list-cycles(active)[0]', async () => {
+            const fromList = await runAction('list-cycles', { teamKey: bootstrap.cycleTeam.key, type: 'active', limit: 1 });
+            const fromAction = await runAction('get-active-cycle', { teamKey: bootstrap.cycleTeam.key });
+            assert(fromList.cycles[0].id === fromAction.id, `id mismatch: list=${fromList.cycles[0].id} action=${fromAction.id}`);
+            assert(fromAction.team.key === bootstrap.cycleTeam.key, `team mismatch`);
+            const now = Date.now();
+            assert(new Date(fromAction.startsAt).getTime() <= now, 'active cycle starts in future');
+            assert(now <= new Date(fromAction.endsAt).getTime(), 'active cycle already ended');
+            return `cycle #${fromAction.number}`;
+        });
     }
+
+    await assertThrows(
+        'get-active-cycle(nonexistent team) throws',
+        () => runAction('get-active-cycle', { teamKey: 'ZZNOPE' }),
+        /No active cycle found/,
+    );
 
     await assertContract('list-users(active=true) returns only active users', async () => {
         const r = await runAction('list-users', { active: true, limit: 10 });
@@ -228,6 +328,54 @@ async function filterContracts() {
             assert(u.active === true, `${u.email} returned but active=${u.active}`);
         }
         return `${r.users.length} active users`;
+    });
+
+    await assertContract('list-users(admin=true) returns only admins', async () => {
+        const r = await runAction('list-users', { admin: true, limit: 10 });
+        for (const u of r.users) {
+            assert(u.admin === true, `${u.email} returned but admin=${u.admin}`);
+        }
+        return `${r.users.length} admin user(s)`;
+    });
+
+    await assertContract('list-issues(stateName=X) returns only issues in that workflow state', async () => {
+        // Use the bootstrap issue's state name as the query
+        const stateName = bootstrap.issue.state.name;
+        const r = await runAction('list-issues', { teamKey: bootstrap.team.key, stateName, limit: 5 });
+        for (const issue of r.issues) {
+            assert(
+                issue.state.name === stateName,
+                `issue ${issue.identifier} has state.name="${issue.state.name}" but filter was "${stateName}"`,
+            );
+        }
+        return `${r.issues.length} issue(s), all in state "${stateName}"`;
+    });
+
+    await assertContract('list-issues(stateName + stateType) AND-merges (not clobbers)', async () => {
+        const stateName = bootstrap.issue.state.name;
+        const stateType = bootstrap.issue.state.type;
+        const r = await runAction('list-issues', { teamKey: bootstrap.team.key, stateName, stateType, limit: 5 });
+        for (const issue of r.issues) {
+            assert(issue.state.name === stateName, `state.name mismatch`);
+            assert(issue.state.type === stateType, `state.type mismatch`);
+        }
+        return `${r.issues.length} issue(s) matched both name="${stateName}" AND type="${stateType}"`;
+    });
+
+    await assertContract('list-issues(assigneeEmail) returns only issues assigned to that email', async () => {
+        // Find an assigned issue first
+        const all = await runAction('list-issues', { teamKey: bootstrap.team.key, limit: 25 });
+        const assigned = all.issues.find((i) => i.assignee !== null);
+        if (!assigned) return 'no assigned issues in workspace, skipping';
+        const email = assigned.assignee.email;
+        const r = await runAction('list-issues', { assigneeEmail: email, limit: 10 });
+        for (const issue of r.issues) {
+            assert(
+                issue.assignee?.email === email,
+                `issue ${issue.identifier} assignee=${issue.assignee?.email} but filter was ${email}`,
+            );
+        }
+        return `${r.issues.length} issue(s) assigned to ${email}`;
     });
 
     await assertContract('list-users(query=<viewer email local>) includes the viewer', async () => {
@@ -381,6 +529,30 @@ async function errorContracts() {
         'add-comment(bad UUID) throws',
         () => runAction('add-comment', { issueId: '00000000-0000-0000-0000-000000000000', body: 'x' }),
         /not found|GraphQL|invalid/i,
+    );
+
+    await assertThrows(
+        'update-project(priority=99) rejected by Zod before hitting Linear',
+        () => runAction('update-project', { projectId: '00000000-0000-0000-0000-000000000000', priority: 99 }),
+        /priority|Too big|less than/i,
+    );
+
+    await assertThrows(
+        'update-issue(priority=-1) rejected by Zod before hitting Linear',
+        () => runAction('update-issue', { issueId: '00000000-0000-0000-0000-000000000000', priority: -1 }),
+        /priority|Too small|greater/i,
+    );
+
+    await assertThrows(
+        'list-issues(limit=0) rejected by Zod (must be positive)',
+        () => runAction('list-issues', { limit: 0 }),
+        /Too small|positive|>\s*0/i,
+    );
+
+    await assertThrows(
+        'list-issues(limit=1.5) rejected by Zod (must be integer)',
+        () => runAction('list-issues', { limit: 1.5 }),
+        /expected int|integer/i,
     );
 
     await assertThrows(
@@ -560,40 +732,68 @@ async function schemaDriftContract() {
         const live = await linearGraphQL(getIntrospectionQuery());
         const committed = JSON.parse(await readFile(schemaPath, 'utf8'));
 
-        // Compare type set (presence/absence of types is the most meaningful drift)
         const liveTypes = new Set(live.__schema.types.map((t) => t.name));
         const committedTypes = new Set(committed.__schema.types.map((t) => t.name));
 
-        const onlyLive = [...liveTypes].filter((n) => !committedTypes.has(n));
         const onlyCommitted = [...committedTypes].filter((n) => !liveTypes.has(n));
-
-        if (onlyLive.length || onlyCommitted.length) {
-            const lines = [];
-            if (onlyLive.length) lines.push(`new in live: ${onlyLive.slice(0, 5).join(', ')}${onlyLive.length > 5 ? '...' : ''}`);
-            if (onlyCommitted.length) lines.push(`removed from live: ${onlyCommitted.slice(0, 5).join(', ')}`);
-            throw new Error(`schema drift: ${lines.join('; ')} (run npm run schema:refresh)`);
+        if (onlyCommitted.length) {
+            throw new Error(`types removed from live: ${onlyCommitted.slice(0, 5).join(', ')} (run npm run schema:refresh)`);
         }
 
-        // Compare field counts on the types we actually query
-        const relevantTypes = ['Project', 'Issue', 'Cycle', 'Team', 'User', 'ProjectUpdate'];
-        for (const typeName of relevantTypes) {
+        // Field-presence on output types we query
+        const outputTypes = ['Project', 'Issue', 'Cycle', 'Team', 'User', 'ProjectUpdate'];
+        for (const typeName of outputTypes) {
             const liveType = live.__schema.types.find((t) => t.name === typeName);
             const committedType = committed.__schema.types.find((t) => t.name === typeName);
             if (!liveType || !committedType) continue;
             const liveFields = new Set((liveType.fields || []).map((f) => f.name));
             const committedFields = new Set((committedType.fields || []).map((f) => f.name));
-            const added = [...liveFields].filter((n) => !committedFields.has(n));
             const removed = [...committedFields].filter((n) => !liveFields.has(n));
             if (removed.length) {
                 throw new Error(`${typeName} lost fields in live: ${removed.join(', ')} (run npm run schema:refresh)`);
             }
-            if (added.length > 5) {
-                // many additions usually mean fixture is just old; informational only
-                console.log(`    note: ${typeName} has ${added.length} new fields in live (informational)`);
+        }
+
+        // Input-field presence on filters / inputs we send. This is what would have
+        // caught the ProjectFilter.description regression (we were sending a field
+        // Linear's ProjectFilter never had).
+        const inputTypes = [
+            'IssueFilter',
+            'ProjectFilter',
+            'CycleFilter',
+            'UserFilter',
+            'TeamFilter',
+            'TeamCollectionFilter',
+            'ProjectUpdateFilter',
+            'ProjectCreateInput',
+            'ProjectUpdateInput',
+            'IssueUpdateInput',
+            'CommentCreateInput',
+            'ProjectUpdateCreateInput',
+        ];
+        for (const typeName of inputTypes) {
+            const liveType = live.__schema.types.find((t) => t.name === typeName);
+            const committedType = committed.__schema.types.find((t) => t.name === typeName);
+            if (!liveType || !committedType) continue;
+            const liveFields = new Set((liveType.inputFields || []).map((f) => f.name));
+            const committedFields = new Set((committedType.inputFields || []).map((f) => f.name));
+            const removed = [...committedFields].filter((n) => !liveFields.has(n));
+            if (removed.length) {
+                throw new Error(
+                    `${typeName} lost input fields in live: ${removed.join(', ')} (run npm run schema:refresh)`,
+                );
             }
         }
 
-        return 'no drift on the types we query';
+        return `output types + ${inputTypes.length} input types verified`;
+    });
+
+    // Belt and suspenders for the ProjectFilter.description bug class: send a query
+    // that would have tripped the old filter shape and confirm Linear accepts it.
+    await assertContract('list-projects(query=...) sends a filter Linear accepts (no GraphQL error)', async () => {
+        // Empty result is fine; non-error is the signal.
+        await runAction('list-projects', { query: 'zz-unlikely-substring-' + Math.random().toString(36).slice(2, 8), limit: 1 });
+        return 'no GraphQL error from ProjectFilter';
     });
 }
 

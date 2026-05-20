@@ -14,7 +14,7 @@ const listProjectsInputSchema = z.object({
         .optional()
         .describe('Filter by project state'),
     leadEmail: z.string().optional().describe('Filter by project lead email'),
-    query: z.string().optional().describe('Full-text search across name and description'),
+    query: z.string().optional().describe('Case-insensitive substring match against project name'),
     limit: z
         .number()
         .int()
@@ -58,12 +58,10 @@ const action = createAction({
         if (input.teamKey) filter['accessibleTeams'] = { some: { key: { eq: input.teamKey } } };
         if (input.state) filter['state'] = { eq: input.state };
         if (input.leadEmail) filter['lead'] = { email: { eq: input.leadEmail } };
-        if (input.query) {
-            filter['or'] = [
-                { name: { containsIgnoreCase: input.query } },
-                { description: { containsIgnoreCase: input.query } },
-            ];
-        }
+        // ProjectFilter has no `description` comparator (unlike IssueFilter). Project
+        // text search matches against `name` only; full content search would require
+        // searchableContent, which is marked [Internal] in Linear's schema.
+        if (input.query) filter['name'] = { containsIgnoreCase: input.query };
 
         const query = `
             query ListProjects($filter: ProjectFilter, $first: Int!, $after: String) {
