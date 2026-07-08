@@ -1,6 +1,7 @@
 // Jira integrations
 import './jira/actions/list-issues.js';
 import './jira/actions/create-issue.js';
+import './jira/actions/list-projects.js';
 
 // Jira (Basic Auth) integrations
 import './jira-basic/actions/list-issues.js';

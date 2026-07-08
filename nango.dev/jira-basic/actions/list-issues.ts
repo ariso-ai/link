@@ -7,7 +7,7 @@ const listIssuesInputSchema = z.object({
     status: z.string().optional().describe('Filter by status name (e.g. "To Do", "In Progress", "Done")'),
     assignee: z.string().optional().describe('Filter by assignee account ID. Use "currentUser()" for the authenticated user.'),
     maxResults: z.number().optional().describe('Maximum number of issues to return (default 50, max 100)'),
-    startAt: z.number().optional().describe('Index of the first result to return for pagination (default 0)'),
+    nextPageToken: z.string().optional().describe('Cursor for pagination, returned by the previous page. Omit for the first page.'),
     jql: z.string().optional().describe('Raw JQL query. When provided, project/status/assignee filters are ignored.'),
 });
 
@@ -28,9 +28,9 @@ const jiraIssueSchema = z.object({
 
 const listIssuesOutputSchema = z.object({
     issues: z.array(jiraIssueSchema),
-    total: z.number(),
-    startAt: z.number(),
     maxResults: z.number(),
+    nextPageToken: z.string().nullable(),
+    isLast: z.boolean(),
 });
 
 type JiraIssue = z.infer<typeof jiraIssueSchema>;
@@ -53,6 +53,7 @@ interface JiraSearchResponse {
         };
     }>;
     isLast: boolean;
+    nextPageToken?: string;
 }
 
 // --- Action ---
@@ -80,16 +81,19 @@ const action = createAction({
         }
 
         const maxResults = Math.min(input.maxResults ?? 50, 100);
-        const startAt = input.startAt ?? 0;
+
+        const params: Record<string, string> = {
+            jql,
+            maxResults: String(maxResults),
+            fields: 'summary,status,issuetype,assignee,reporter,priority,created,updated',
+        };
+        if (input.nextPageToken) {
+            params['nextPageToken'] = input.nextPageToken;
+        }
 
         const response = await nango.proxy<JiraSearchResponse>({
             endpoint: '/rest/api/3/search/jql',
-            params: {
-                jql,
-                maxResults: String(maxResults),
-                startAt: String(startAt),
-                fields: 'summary,status,issuetype,assignee,reporter,priority,created,updated',
-            },
+            params,
             headers: {
                 'X-Atlassian-Token': 'no-check',
             },
@@ -113,9 +117,9 @@ const action = createAction({
 
         return {
             issues,
-            total: issues.length,
-            startAt,
             maxResults,
+            nextPageToken: data.nextPageToken ?? null,
+            isLast: data.isLast,
         };
     },
 });
