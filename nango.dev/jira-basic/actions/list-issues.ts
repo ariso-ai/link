@@ -1,6 +1,5 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
-import { getCloudId } from '../helpers/get-cloud-id.js';
 
 // --- Input schema ---
 const listIssuesInputSchema = z.object({
@@ -60,15 +59,12 @@ interface JiraSearchResponse {
 // --- Action ---
 const action = createAction({
     description: 'List issues from a Jira project using JQL search',
-    version: '2.0.0',
+    version: '1.0.0',
     endpoint: { method: 'GET', path: '/jira/issues', group: 'Issues' },
-    scopes: ['read:jira-work'],
     input: listIssuesInputSchema,
     output: listIssuesOutputSchema,
 
     exec: async (nango, input) => {
-        const cloudId = await getCloudId(nango);
-
         // Build JQL query
         let jql: string;
         if (input.jql) {
@@ -96,8 +92,7 @@ const action = createAction({
         }
 
         const response = await nango.proxy<JiraSearchResponse>({
-            baseUrlOverride: 'https://api.atlassian.com',
-            endpoint: `/ex/jira/${cloudId}/rest/api/3/search/jql`,
+            endpoint: '/rest/api/3/search/jql',
             params,
             headers: {
                 'X-Atlassian-Token': 'no-check',
@@ -117,7 +112,7 @@ const action = createAction({
             priority: issue.fields.priority?.name ?? null,
             created: issue.fields.created,
             updated: issue.fields.updated,
-            url: `https://api.atlassian.com/ex/jira/${cloudId}/browse/${issue.key}`,
+            url: `${new URL(issue.self).origin}/browse/${issue.key}`,
         }));
 
         return {
