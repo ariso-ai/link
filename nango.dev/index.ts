@@ -2,6 +2,11 @@
 import './jira/actions/list-issues.js';
 import './jira/actions/create-issue.js';
 
+// Jira (Basic Auth) integrations
+import './jira-basic/actions/list-issues.js';
+import './jira-basic/actions/create-issue.js';
+import './jira-basic/actions/list-projects.js';
+
 // Confluence integrations
 import './confluence/actions/search-confluence.js';
 import './confluence/actions/get-page.js';
