@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "nango compile",
     "dev": "nango dev",
-    "test": "node scripts/validate-graphql.js",
+    "test": "node scripts/validate-graphql.js && node --test scripts/*.test.mjs",
     "deploy:dev": "nango deploy dev",
     "deploy:prod": "nango deploy prod"
   },

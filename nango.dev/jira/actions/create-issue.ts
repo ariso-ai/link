@@ -1,6 +1,6 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
-import { getCloudId } from '../helpers/get-cloud-id.js';
+import { getJiraSite } from '../helpers/get-jira-site.js';
 
 // --- Input schema ---
 const createIssueInputSchema = z.object({
@@ -57,7 +57,7 @@ const action = createAction({
     output: createIssueOutputSchema,
 
     exec: async (nango, input) => {
-        const cloudId = await getCloudId(nango);
+        const { cloudId } = await getJiraSite(nango);
 
         // Build the fields object in the format Jira API v3 expects
         const fields: Record<string, unknown> = {

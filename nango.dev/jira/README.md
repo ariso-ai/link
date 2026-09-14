@@ -39,11 +39,17 @@ Searches for issues using JQL. Supports filtering by project, status, and assign
 | `status` | `string` | no | Filter by status name (e.g. `"To Do"`, `"In Progress"`) |
 | `assignee` | `string` | no | Filter by assignee account ID. Use `"currentUser()"` for the authenticated user |
 | `maxResults` | `number` | no | Max issues to return (default 50, max 100) |
-| `startAt` | `number` | no | Pagination offset (default 0) |
+| `nextPageToken` | `string` | no | Pagination cursor returned by the previous page. Omit for the first page |
 | `jql` | `string` | no | Raw JQL query. When provided, project/status/assignee filters are ignored |
+
+**Output:** each issue includes a `url` that opens it in the Jira web UI (`https://<site>.atlassian.net/browse/<KEY>`).
 
 ## Helpers
 
 | Helper | Description |
 | --- | --- |
-| `get-cloud-id` | Retrieves the Jira Cloud ID for the authenticated connection via the OAuth accessible-resources endpoint |
+| `get-jira-site` | Retrieves the Jira Cloud ID (for API paths) and site URL (for browser links) via the OAuth accessible-resources endpoint |
+
+## Tests
+
+`npm test` runs `scripts/jira-urls.test.mjs`, which checks that `list-issues` and `list-projects` return browsable site URLs.
