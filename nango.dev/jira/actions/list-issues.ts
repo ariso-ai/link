@@ -1,6 +1,6 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
-import { getCloudId } from '../helpers/get-cloud-id.js';
+import { getJiraSite } from '../helpers/get-jira-site.js';
 
 // --- Input schema ---
 const listIssuesInputSchema = z.object({
@@ -67,7 +67,7 @@ const action = createAction({
     output: listIssuesOutputSchema,
 
     exec: async (nango, input) => {
-        const cloudId = await getCloudId(nango);
+        const { cloudId, siteUrl } = await getJiraSite(nango);
 
         // Build JQL query
         let jql: string;
@@ -117,7 +117,7 @@ const action = createAction({
             priority: issue.fields.priority?.name ?? null,
             created: issue.fields.created,
             updated: issue.fields.updated,
-            url: `https://api.atlassian.com/ex/jira/${cloudId}/browse/${issue.key}`,
+            url: `${siteUrl}/browse/${issue.key}`,
         }));
 
         return {
