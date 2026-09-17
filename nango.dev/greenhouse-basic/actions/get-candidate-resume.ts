@@ -1,5 +1,6 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
+import { collectAttachments, type GreenhouseAttachment } from '../helpers/attachments.js';
 
 const getCandidateResumeInputSchema = z.object({
     candidateId: z.number().describe('Greenhouse candidate ID'),
@@ -25,7 +26,8 @@ interface GreenhouseCandidateDetail {
     id: number;
     first_name: string | null;
     last_name: string | null;
-    attachments: Array<{ filename: string; url: string; type: string; created_at: string | null }> | null;
+    attachments: GreenhouseAttachment[] | null;
+    applications: Array<{ attachments: GreenhouseAttachment[] | null }> | null;
 }
 
 const action = createAction({
@@ -42,7 +44,7 @@ const action = createAction({
         });
 
         const candidate = response.data;
-        const all = candidate.attachments ?? [];
+        const all = collectAttachments(candidate);
         const selected = input.includeAllAttachments ? all : all.filter((attachment) => attachment.type === 'resume');
 
         const attachments: Attachment[] = selected.map((attachment) => ({

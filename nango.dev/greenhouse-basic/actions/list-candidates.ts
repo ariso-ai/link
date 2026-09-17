@@ -1,5 +1,6 @@
 import { createAction } from 'nango';
 import * as z from 'zod';
+import { hasResume, type GreenhouseAttachment } from '../helpers/attachments.js';
 
 const listCandidatesInputSchema = z.object({
     jobId: z.number().optional().describe('Only return candidates who have applied to this job'),
@@ -25,7 +26,7 @@ const candidateSchema = z.object({
     company: z.string().nullable(),
     emails: z.array(z.string()),
     applications: z.array(candidateApplicationSchema),
-    hasResume: z.boolean().describe('Whether this candidate has a resume attachment. Use get-candidate-resume to fetch its download URL.'),
+    hasResume: z.boolean().describe('Whether this candidate has a resume attachment on their profile or on any of their applications. Use get-candidate-resume to fetch its download URL.'),
     updatedAt: z.string(),
 });
 
@@ -46,13 +47,14 @@ interface GreenhouseCandidate {
     company: string | null;
     updated_at: string;
     email_addresses: Array<{ value: string; type: string }> | null;
-    attachments: Array<{ filename: string; url: string; type: string; created_at: string }> | null;
+    attachments: GreenhouseAttachment[] | null;
     applications: Array<{
         id: number;
         status: string;
         applied_at: string | null;
         jobs: Array<{ id: number; name: string }> | null;
         current_stage: { id: number; name: string } | null;
+        attachments: GreenhouseAttachment[] | null;
     }> | null;
 }
 
@@ -102,7 +104,7 @@ const action = createAction({
                 currentStage: application.current_stage?.name ?? null,
                 appliedAt: application.applied_at ?? null,
             })),
-            hasResume: (candidate.attachments ?? []).some((attachment) => attachment.type === 'resume'),
+            hasResume: hasResume(candidate),
             updatedAt: candidate.updated_at,
         }));
 

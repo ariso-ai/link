@@ -59,6 +59,10 @@ Calls `GET /v1/candidates/{id}` and filters `attachments` to `type: "resume"`.
 
 > **Attachment URLs expire.** Greenhouse hosts attachments on S3 and serves them as signed URLs valid for **7 days** from issue. Download the file when you get the URL rather than storing the URL for later.
 
+Harvest exposes attachments at two levels of a candidate response: on the candidate profile, and on each nested application (per-application attachments were added in July 2019). The candidate-level array appears to aggregate both, but that isn't documented, so `list-candidates` and `get-candidate-resume` read from both levels and deduplicate — see `helpers/attachments.ts`.
+
+Deduplication keys on `filename` + `type` + `created_at`, never on `url`: signed URLs are regenerated per request, so the same file can arrive with different signatures at each level and would survive a URL-based comparison.
+
 ### `list-job-stages`
 
 Calls `GET /v1/jobs/{jobId}/stages`. This is the only source of the `interviewId` that `schedule-interview` requires.
