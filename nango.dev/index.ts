@@ -8,6 +8,12 @@ import './jira-basic/actions/list-issues.js';
 import './jira-basic/actions/create-issue.js';
 import './jira-basic/actions/list-projects.js';
 
+// Greenhouse (Basic Auth) integrations
+import './greenhouse-basic/actions/list-candidates.js';
+import './greenhouse-basic/actions/get-candidate-resume.js';
+import './greenhouse-basic/actions/list-job-stages.js';
+import './greenhouse-basic/actions/schedule-interview.js';
+
 // Confluence integrations
 import './confluence/actions/search-confluence.js';
 import './confluence/actions/get-page.js';
